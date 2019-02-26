@@ -1,0 +1,201 @@
+{% extends 'student_base.html' %}
+{% load markdown_deux_tags %}
+{% load static %}
+
+{% block content %}
+	<div id='offline' style='display:none' class="alert alert-info fade in">
+	    <a href="#" class="close" >&times;</a>Caution: You are offline now. Your progress cannot be saved.
+	</div>
+
+    {% if message %}
+        {% if success %} <div class="alert alert-info fade in">
+        {% else %} <div class="alert alert-warning fade in"> {% endif %}
+            <a href="#" class="close" >&times;</a>
+            {{ message|safe }}
+            </div>
+    {% endif %}
+	<div id="quiz-top-bar">
+	{% if question_statements %}
+         <button id= 'question_paper_modal_button' type="button" class="btn btn-info" data-toggle="modal" data-target="#question-paper">Question Paper</button>
+	{% endif %}
+
+	{% if information %}
+         <button id= 'information_modal_button' type="button" class="btn btn-info" data-toggle="modal" data-target="#information">Information</button>
+	{% endif %}
+	</div>
+
+    {% if time_left %}
+	    <div id="div-timer" class="heading">
+	    <p id="timer">Time Left: <span id="timer-time"></span></p>
+	    </div>
+    {% endif %}
+
+	{% for qid, question in questions_html %}
+		<div id='div-question-{{qid}}' class= 'question hidden-question'>
+			<form id='form-question-{{qid}}' class="form-horizontal" method="POST" class="post-form">
+				{{question|safe}}
+		    </form>
+		    <button id='mark-for-review-button' onClick="mark_for_review_and_next('{{qid}}')" class="btn btn-dark">Mark For Review &amp; Next</button>
+		    <button id='save-and-next-button' onClick="save_and_next({{qid}})" class="btn btn-info">Save and Next</button>
+	    	<hr/>
+	    </div>
+    {% endfor %}
+
+	{% if question_statements %}
+     <div id="question-paper" class="modal fade" role="dialog">
+        <div class="modal-dialog  modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h3 class="modal-title">Question Paper</h3>
+              </div>
+              <div class="modal-body">
+				<table>
+                {% for qid, question_statement in question_statements %}
+				  <div onclick='jumpToQuestion({{qid}})' data-dismiss="modal" class="question_statement_in_paper">
+					  <li><h4>{{question_statement | safe}}</h4></li>
+				  </div>
+				{% endfor %}
+				</table>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+	{% if information %}
+     <div id="information" class="modal fade" role="dialog">
+        <div class="modal-dialog  modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h3 class="modal-title">Information</h3>
+              </div>
+              <div class="modal-body">
+                {{information | markdown}}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+{% endblock content %}
+
+{% block sidebar_right %}
+
+	<div class="panel panel-default" >
+		<div class="panel-body">
+			<div id='palette-buttons-grid-summary'>
+				<div class='question-button-grid-item'><div class='div-question-button'><button onClick="show_questions_in_palette('answered')" id='button-number-answered' class='question-button  btn-success answered'>0</button><div class='question-button-heading'>Answered</div></div>
+				</div>
+
+				<div class='question-button-grid-item'><div class='div-question-button' ><button id='button-number-unvisited' onClick="show_questions_in_palette('unvisited')"  class='question-button btn-dark unvisited'>0</button><div class='question-button-heading'>Unvisited</div></div>
+				</div>
+				<div class='question-button-grid-item'><div class='div-question-button' ><button id='button-number-not-answered'  onClick="show_questions_in_palette('not-answered')"  class='question-button btn-danger not-answered'>0</button><div class='question-button-heading'>Not Answered</div></div>
+				</div>
+				<div class='question-button-grid-item'><div class='div-question-button'><button id='button-number-marked'  onClick="show_questions_in_palette('marked')"  class='question-button btn-info marked'>0</button><div class='question-button-heading'>Marked for Review</div></div>
+				</div>
+			 </div>
+			 	<div id="palette-back-button"><button class='btn btn-info'
+			 	style="width:100%;"
+			 	onClick="show_all_questions_in_palette()">Back</button></div>
+		</div>
+	</div>
+
+	<div id="div-question-palette"  class="panel panel-default" >
+		<div id='div-question-buttons-header' class="panel-heading" >Navigate Questions</div>
+		<div class="panel-body">
+			<div id='question-buttons-grid'>
+			   {% for qid in question_ids %}
+					<div class='question-button-grid-item'> <button id='id-question-button-{{qid}}'  class='question-button btn-dark unvisited' onclick='jumpToQuestion({{qid}})'>{{forloop.counter}}</button>
+					</div>
+			   {% endfor %}
+			 </div>
+		</div>
+	</div>
+
+	<div id="div-submit">
+		<button id="submit-button" class="btn btn-primary" onClick ='submit()'>Submit</button>
+	</div>
+{% endblock sidebar_right %}
+
+
+{% block javascript %}
+<script type="text/javascript">
+var question_ids = [];  // stores the question ids of the question.
+var question_types = {}; // stores the question types for each question [corresponds to question_ids]
+
+{% for qid, question_type in question_types.items %}
+	question_types[{{qid}}] = '{{question_type}}';
+	question_ids.push({{qid}});
+{% endfor %}
+
+// all the validators for the question should be added in response_validators . e.g., if there is a validator
+// for question of type MCQ, then it should be added as response_validators['MCQ'] = function() { return true;};
+response_validators = {};
+{% if answered_question_ids %}
+var answered_question_ids = {{answered_question_ids}};
+{% else %}
+var answered_question_ids = [];
+{% endif %}
+
+
+</script>
+
+<script src="{% static 'js/quiz.js' %}"></script>
+<script src="{% static 'js/redirect_handler.js' %}"></script>
+
+{% if time_left %}
+<script>
+var countDownTime = Date.now() + {{time_left}}; //In milliseconds
+
+function timer_update() {
+  var now = Date.now();
+  var distance = countDownTime - now;
+
+  // Time calculations for days, hours, minutes and seconds
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  //Ignore days as it must be zero (hopefully!)
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  hours_str = ("0" + hours).slice(-2);
+  minutes_str = ("0" + minutes).slice(-2);
+  seconds_str = ("0" + seconds).slice(-2);
+  if (hours>0) {
+  document.getElementById("timer-time").innerHTML = hours_str + ':' + minutes_str + ":" + seconds_str;
+	}
+	else {
+		document.getElementById("timer-time").innerHTML =  minutes_str + ":" + seconds_str;
+	}
+  if (hours == 0 && minutes<5) {
+  	if (!($('#div-timer').hasClass('danger'))) $('#div-timer').addClass('danger');
+  }
+  if (hours == 0 && minutes<1) {
+  	if (!($('#div-timer').hasClass('more-danger'))) $('#div-timer').addClass('more-danger');
+  }
+  if (distance <= 0) {
+  	//Submit the quiz and exit
+    clearInterval(x);
+    document.getElementById("timer-time").innerHTML = "00:00:00";
+    force_submit();
+  }
+}
+
+// Update the count down every 1 second
+var x = setInterval(timer_update, 1000);
+
+</script>
+
+
+
+{% endif %}
+
+{% endblock javascript %}

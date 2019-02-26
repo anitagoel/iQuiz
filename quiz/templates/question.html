@@ -1,0 +1,13 @@
+<div id="div-{{qid}}">
+	<div class="statement">
+	{% block statement %}
+		{{ statement | safe}}
+	{% endblock statement %}
+	</div>
+
+	<div class='options'>
+		{% block options %}
+		{% endblock options %}
+	</div>
+	
+</div>

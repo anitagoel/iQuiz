@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load markdown_deux_tags %}
+{% load static %}
+
+{% block content %}
+
+	{% if message %}
+		{% if success %} <div class="alert alert-info fade in">
+		{% else %} <div class="alert alert-warning fade in"> {% endif %}
+    		<a href="#" class="close" >&times;</a>
+    		{{ message|safe }}
+			</div>
+	{% endif %}
+
+	
+	{% if questionsHTML %}
+	<div class = "questions" style="display:inline-block; width:100%;">
+		<div width = "100%" class="table-responsive">
+	   		<table  class='table table-bordered table-striped table-highlight'>
+	   			<tbody>
+				{{ questionsHTML |safe }}
+				</tbody>
+			</table>
+		</div>
+	</div>
+	{% endif %}
+{% endblock content %}
+
+

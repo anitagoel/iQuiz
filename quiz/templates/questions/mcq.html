@@ -1,0 +1,33 @@
+{% extends 'question.html' %}
+{% load markdown_deux_tags %}
+
+
+{% block options %}
+{% if not correct_option_id %}
+	{% for option_id, option_value in options %}
+		<div class='field'>
+						<label class="mcq-option radio-inline">
+						<input  id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}'  required  {% if checked_option_id == option_id %}checked{% endif %}>{{ option_value | markdown }}
+						</label>
+		</div>
+	{% endfor %}
+
+{% else %}
+		{% for option_id, option_value in options %}
+			<div class='field'>
+				    <label class="responded-option radio-inline {% if checked_option_id == option_id %}
+							{% if option_id != correct_option_id %}incorrect-selection
+							{% else %} perfect
+					{% endif %}
+				    {% else %}
+				    		{% if option_id == correct_option_id %}correct-option{% endif %}
+				   	{% endif %}">
+					<input  id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}' disabled  {% if checked_option_id == option_id %}checked{% endif %}>
+						{{ option_value | markdown }}
+					</label>
+			</div>
+		{% endfor %}
+{% endif %}
+{% endblock options %}
+
+

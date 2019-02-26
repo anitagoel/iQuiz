@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load markdown_deux_tags %}
+{% load static %}
+
+{%block head %}
+	{{ form.media }}
+	<link rel="stylesheet" href="{% static 'pagedown/custom.css' %}">
+{% endblock head %}
+{% block content %}
+<div>
+	<h2>Add/Edit Question</h2>
+
+	{% if success %}
+	<div class="alert alert-success fade in">
+    <a href="#" class="close" data-dismiss="alert">&times;</a>
+    <strong>Success!</strong>  The question is updated!
+	</div>
+	{% else %}
+
+	<div class="alert alert-warning fade in">
+    <a href="#" class="close" data-dismiss="alert">&times;</a>
+    <strong>Note:</strong> {{ message }}
+	</div>
+	{% endif %}
+ 	<div class=''>
+    <form class="form-horizontal" method="POST" class="post-form"> {% csrf_token %}
+    	<div class="table-responsive">
+	   		<table  class='table table-bordered table-striped table-highlight'>
+	   		<tbody id="form-table">
+	   		{{ form }}
+
+	   		{% for option_id, option_value in options %}
+	   		<tr id='row-{{option_id}}'>
+	   			<th><input type="radio" name="correct_option" {% if expected_option_id == option_id %} checked="checked" {% endif %} value="{{option_id}}"> <label for="id_draft_options_{{ forloop.counter }}">Option {{ forloop.counter }} </label></th>
+				  	<td>
+					  	<div class="wmd-wrapper" id="id_draft_options_{{ forloop.counter }}-wmd-wrapper">
+					    	<div class="wmd-panel">
+						        <div id="id_draft_options_{{ forloop.counter }}_wmd_button_bar"></div>
+						      	 <textarea class="wmd-input" cols="40" id="id_draft_options_{{ forloop.counter }}" name="draft_options" rows="2" placeholder='Option' required>{{option_value}}</textarea>
+					    	</div>
+					    	<p class="wmd-preview-title">
+					        	<small>HTML Preview:</small>
+					    	</p>
+					    	<div id="id_draft_options_{{ forloop.counter }}_wmd_preview" class="wmd-panel wmd-preview"></div>
+						</div>
+				 </td>
+			</tr>
+	   		{% endfor %}
+	   		
+	   		</tbody>
+	  		</table>
+	  	</div>
+		<button id='addNewOptionButton' type="button" onclick="addNewOption()" class="btn btn-info">Add New Option</button>
+
+        <button type="submit" class="save btn btn-primary">Save</button>
+    </form>
+    </div>
+
+ </div>
+
+
+{% endblock content %}
+
+
+{% block javascript %}
+
+<script>
+//The script containing the function to help with loading the Pagedown editor
+
+
+var createEditor = function(el) {
+        var selectors = {
+            input : el.id,
+            button : el.id + "_wmd_button_bar",
+            preview : el.id + "_wmd_preview",
+        };
+        var editor = new Markdown.Editor(converter, "", selectors);
+        editor.run();
+    };
+
+</script>
+<script>
+
+
+{% if options %}
+	var current_option_number =  {{ options|length }};	
+{% else %}
+	var current_option_number = 0;
+{% endif %}
+var options_table = document.getElementById("form-table");
+//get the html for the option
+var option_html = `
+				  	<th><input type="radio" name="correct_option" value="{option_id}"> <label for="id_draft_options_{option_number}">Option {option_number}</label></th>
+				  	<td>
+					  	<div class="wmd-wrapper" id="id_draft_options_{option_number}-wmd-wrapper">
+					    	<div class="wmd-panel">
+						        <div id="id_draft_options_{option_number}_wmd_button_bar"></div>
+						      	 <textarea  class="wmd-input" cols="40" id="id_draft_options_{option_number}" name="draft_options" rows="3" required></textarea>
+					    	</div>
+					    	<p class="wmd-preview-title">
+					        	<small>HTML Preview</small>
+					    	</p>
+					    	<div id="id_draft_options_{option_number}_wmd_preview" class="wmd-panel wmd-preview"></div>
+						</div>
+					</td>
+`
+function addNewOption() {
+	current_option_number += 1;
+	newOptionHTML = option_html;
+	newOptionHTML = newOptionHTML.replace(/{option_id}/g, "option_" + current_option_number);
+	newOptionHTML = newOptionHTML.replace(/{option_number}/g, '' + current_option_number);
+	newOptionHTMLElement = document.createElement("tr");
+	newOptionHTMLElement.id = "table_row_option_{option_number}".replace("{option_number}", current_option_number);
+	newOptionHTMLElement.innerHTML = newOptionHTML;
+	console.log(newOptionHTMLElement.html);
+	options_table.insertBefore(newOptionHTMLElement, null);
+	newTextArea = document.getElementById("id_draft_options_{option_number}".replace("{option_number}", current_option_number));
+
+	DjangoPagedown.createEditor(newTextArea);
+	
+}
+</script>
+
+<script>
+//Handles focussed element
+$('textarea').focus(function () {
+	$('#' + this.id + '_wmd_preview').show();
+})
+$('textarea').blur(function () {
+	$('#' + this.id + '_wmd_preview').hide();
+})
+
+
+
+</script>
+{% endblock javascript %}

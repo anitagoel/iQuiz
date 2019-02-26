@@ -1,0 +1,72 @@
+{% extends 'student_base.html' %}
+{% load markdown_deux_tags %}
+{% load static %}
+{% block head_ext %}
+	<link rel='stylesheet' href="{% static 'css/responded_question_paper.css' %}" >
+{% endblock %}
+
+{% block content %}
+    {% if message %}
+        {% if success %} <div class="alert alert-info fade in">
+        {% else %} <div class="alert alert-warning fade in"> {% endif %}
+            <a href="#" class="close" >&times;</a>
+            {{ message|safe }}
+            </div>
+    {% endif %}
+
+	<hr/>
+	<div id="response-info" class="table-responsive">
+	<table class='table table-bordered table-striped table-highlight'>
+	    <tbody>
+	    <tr>
+	        <th>Total Question</th>
+	        <td>{{attempt_details.total_questions}}</td>
+	    </tr>
+        <tr>
+            <th>Correct Answers</th>
+            <td>{{attempt_details.correct}}</td>
+        </tr>
+        <tr>
+            <th>Incorrect Answers</th>
+            <td>{{attempt_details.incorrect}}</td>
+        </tr>
+         <tr>
+            <th>Unattempted Questions</th>
+            <td>{{attempt_details.unanswered}}</td>
+        </tr>
+	    <tr>
+	        <th>Allowed Time</th>
+	        <td>{{attempt_details.allowed_time}}</td>
+	    </tr>
+	    <tr>
+	        <th>Attempt Start Time</th>
+	        <td>{{attempt_details.start_time}} (UTC)</td>
+	    </tr>
+	    <tr>
+	        <th>Attempt Duration</th>
+	        <td>{{attempt_details.duration}}</td>
+	    </tr>
+
+	    <tr>
+	        <th>Total Grade</th>
+	        <td>{{attempt_details.total_grade_percent}}</td>
+	    </tr>
+	    </tbody>
+	</table>
+	</div>
+
+     <div id="question-paper">
+
+        {% for qid, question_html in question_paper %}
+
+          <div class="responded-question">
+			  <span style="display:inline-block">{{forloop.counter}}</span>
+              {{question_html|safe}}
+          </div>
+        {% endfor %}
+
+    </div>
+
+{% endblock content %}
+
+

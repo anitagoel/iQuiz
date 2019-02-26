@@ -1,0 +1,62 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>iQuiz</title>
+	<!--uncomment following when live-->
+		 <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">-->
+		 <!-- comment out following when live -->
+		 {% load static %}
+		 <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+
+		 <link rel='stylesheet' hre="{% static 'css/mystyle.css' %}" >
+		 {% block title %}<title>iQuiz</title>{% endblock title %}
+    <!---	<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script> -->
+
+{% block head %}
+{% endblock head %}
+
+</head>
+
+<body>
+
+	{% block nav_bar %}
+	{% endblock nav_bar %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-8">
+                <h1>iQuiz Application</h1>
+                <p>
+                    This is an LTI application. If you were expecting quiz and are here, then it
+                    means you are not doing it right! LTI Application expects an valid LTI Launch
+                    request from the Tool Consumer.
+                    <hr/>
+                    You should consider reading the documentation on how to setup LTI application,
+                    or iQuiz to get started!
+                    #TODO: Add the docs here!
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+	<!--Java Scripts-->
+	<script src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
+	<script src="{% static 'js/bootstrap.min.js' %}"></script>
+	<script src="{% static 'js/scroll_control.js' %}"></script>
+
+              <!-- <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+              crossorigin="anonymous"></script>
+              <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"> -->
+
+
+  	{% block javascript %}
+  	{% endblock javascript %}
+	</body>
+</html>

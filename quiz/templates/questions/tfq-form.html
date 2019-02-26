@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load markdown_deux_tags %}
+{% load static %}
+
+{%block head %}
+	{{ form.media }}
+	<link rel="stylesheet" href="{% static 'pagedown/custom.css' %}">
+{% endblock head %}
+{% block content %}
+<div>
+	<h2>Add/Edit Question</h2>
+
+	{% if success %}
+	<div class="alert alert-success fade in">
+    <a href="#" class="close" data-dismiss="alert">&times;</a>
+    <strong>Success!</strong>  The question is updated!
+	</div>
+	{% else %}
+
+	<div class="alert alert-warning fade in">
+    <a href="#" class="close" data-dismiss="alert">&times;</a>
+    <strong>Note:</strong> {{ message }}
+	</div>
+	{% endif %}
+
+ 	<div class=''>
+    <form class="form-horizontal" method="POST" class="post-form"> {% csrf_token %}
+    	<div class="table-responsive">
+	   		<table  class='table table-bordered table-striped table-highlight'>
+	   		<tbody id="form-table">
+			<tr><h3>{{top_h3}}</h3></tr>
+	   		{{ form }}
+	   		</tbody>
+	  		</table>
+	  	</div>
+		{% if correct_option == "true" %}
+			<div class="field">
+				<label class="tfq-option radio-inline" for="true-option"><input id='true-option' type="radio" name="correct_option" value="true" checked>True</label>
+			</div>
+			<div class="field">
+				<label class="tfq-option radio-inline" for="false-option"><input id='false-option' type="radio" name="correct_option" value="false">False</label> 
+			</div>
+			{% else %}
+			<div class="field">
+				<label class="tfq-option radio-inline" for="true-option"><input id='true-option' type="radio" name="correct_option" value="true">True</label>
+			</div>
+			<div class="field"> <label class="tfq-option radio-inline" for="false-option"><input id='false-option' type="radio" name="correct_option" value="false" checked>False</label>
+			</div>
+		
+			{% endif %}
+
+        <button type="submit" class="save btn btn-primary">Save</button>
+    </form>
+    </div>
+
+ </div>
+
+{% endblock content %}
+
+
+{% block javascript %}
+<script>
+//Handles focussed element
+$('textarea').focus(function () {
+	$('#' + this.id + '_wmd_preview').show();
+})
+$('textarea').blur(function () {
+	$('#' + this.id + '_wmd_preview').hide();
+})
+</script>
+{% endblock javascript %}

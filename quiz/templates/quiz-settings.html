@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load markdown_deux_tags %}
+{% load static %}
+
+{%block head %}
+    {{ form.media }}
+{% endblock head %}
+
+{% block content %}
+<div>
+    <h2>iQuiz Settings</h2>
+
+    {% if success %}
+    <div class="alert alert-success fade in">
+    <a href="#" class="close" data-dismiss="alert">&times;</a>
+    <strong>Success!</strong>  The settings are successfully modified!
+    </div>
+    {% else %}
+
+        <div class="alert alert-info fade in">
+        <a href="#" class="close" data-dismiss="alert">&times;</a>
+        <strong>Note:</strong>Modify the Live Quiz Settings. Be careful!
+        </div>
+    {% endif %}
+    <div class=''>
+    <form class="form-horizontal" method="POST" class="post-form"> {% csrf_token %}
+        <div class="table-responsive">
+            <table class='table table-bordered table-striped table-highlight'>
+            {{ form }}
+            </table>
+        </div>
+        <button type="submit" class="save btn btn-default">Save</button>
+    </form>
+    </div>
+ </div>
+
+
+{% endblock content %}

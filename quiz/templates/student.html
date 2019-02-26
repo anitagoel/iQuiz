@@ -1,0 +1,233 @@
+{% extends 'student_base.html' %}
+{% load markdown_deux_tags %}
+{% load static %}
+
+{% block content %}
+    {% if message %}
+        {% if success %} 
+            <div class="alert alert-info fade in">
+        {% else %} 
+            <div class="alert alert-warning fade in">
+        {% endif %}
+            <a href="#" class="close" >&times;</a>
+            {{ message|safe }}
+            </div>
+    {% endif %}
+
+    {% if quizname %}
+        <div class="heading quizname">
+        <h1>{{quizname}}</h1>
+        </div>
+    {% endif %}
+    <hr/>
+    <div class="top-bar">
+        <button id='general_instructions_button' type="button" class="btn btn-info" data-toggle="modal" data-target="#general-instructions">General Instructions</button>
+        {% if information %}
+         <button id= 'information_modal_button' type="button" class="btn btn-info" data-toggle="modal" data-target="#information">Information</button>
+        {% endif %}
+    </div>
+
+    <div id="general-instructions" class="modal fade" role="dialog">
+        <div class="modal-dialog  modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h3 class="modal-title">General Instructions</h3>
+              </div>
+              <div class="modal-body">
+                <ol>
+                    <li><h5>Please note that there might be limited number of attempts, so be careful before starting the quiz attempt.</h5></li>
+                    <li><h5>If the quiz is timed, then make sure you have good internet connectivity before you start. The start time is saved at the server when you start the attempt, even if you close the browser, your attempt will be counted after time-up.</h5></li>
+                    <li>
+                        <h5>There is a question palette shown on the quiz, it gives you a summary of your responses as explained below:<br/> </h5>
+                        <div id='palette-buttons-grid-summary-instructions' class="table-responsive">
+                        <table class="table table-bordered table-striped table-highlight">
+                            <tbody>
+                            <tr class='palette-button-instructions'>
+                            <td>
+                            <button id='button-number-answered' class='question-button  btn-success answered'>x</button></td>
+                            <td>
+                            <h5><b>Answered </b>represent the number of questions that are answered and saved.</h5></td>
+                            </tr>
+                            <tr class='palette-button-instructions'>
+                            <td>
+                            <button id='button-number-unvisited' class='question-button btn-dark unvisited'>x</button></td>
+                            <td>
+                            <h5><b>Unvisited </b>represent the number of questions that are not viewed.</h5></td>
+                            </tr>
+                            <tr class='palette-button-instructions'>
+                            <td><button id='button-number-not-answered' class='question-button btn-danger not-answered'>x</button></td>
+                            <td>
+                            <h5><b>Not Answered </b>represent the number of questions that are <b>NOT </b>answered.</h5></td>
+                            </tr>
+                            <tr class='palette-button-instructions'>
+                            <td>
+                            <button id='button-number-marked' class='question-button btn-info marked'>x</button></td>
+                            <td><h5>
+                            <b>Marked For Review </b>represent the number of questions that are answered and marked for review. <em> Note:</em> The questions which are answered and Marked For Review will be considered for evaluation of the marks.
+                            </td></h5> 
+                            </tr>
+                            </tbody>
+                        </table>
+                        </div>
+                    </li>
+                    <li><h5>On clicking the buttons on summary palette, the questions from corresponding category will be highlighted on the question palette.</h5>
+                    </li>
+                </ol>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+        </div>
+    </div>
+    {% if information %}
+     <div id="information" class="modal fade" role="dialog">
+        <div class="modal-dialog  modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h3 class="modal-title">Information</h3>
+              </div>
+              <div class="modal-body">
+                {{information | markdown}}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <hr/>
+    <div class="student_home_buttons">
+        {% if not quiz_not_allowed %}
+            {% if not attempts %}
+               <div id='div-enter-button' class='student_home_item' ><button onClick='confirm_attempt()' class="btn btn-primary btn-lg">Attempt Quiz</button></div>
+            {% else %}
+                <div id='div-enter-button' class='student_home_item' ><button onClick='confirm_attempt()'  class="btn btn-primary btn-lg">Attempt Quiz Again</button></div>
+            {% endif %}
+
+        {% endif %}
+	</div>
+
+
+    <hr/>
+    <div id='student-grades-div' class='student-grades-div'>
+        {% if not attempts %}
+            <div class='message'>
+            <h5>You have not attempted the quiz yet! Please attempt the quiz and return!</h5>
+            </div>
+        {% else %}
+            <div class='heading'>
+                <span>Your attempts details are shown below. You can view the responses' details by clicking <b>View Response</b> button.</span>
+            </div>
+            <div class="table-responsive">
+                <table class='table table-bordered table-striped table-highlight'>
+                    <thead>
+                        <tr>
+                            <td>S.No.</td>
+                            <td>Attempt Submission Time</td>
+                            <td>Duration of Attempt</td>
+                            <td>Grades</td>
+                            <td>View Response</td>
+                            {% if download_allowed %}
+                            <td>Download PDF</td>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attempt in attempts %}
+                            <tr>
+                                <td>{{forloop.counter}}</td>
+                                <td>{{attempt.submission_time}}</td>
+                                <td>{{attempt.duration}}</td>
+                                <td>{{attempt.grade}}</td>
+                                <td><button onClick='show_attempt({{attempt.id}})' class='btn btn-info'>View Response</button></td>
+                                {% if view_download_allowed %}
+                                <td><button onClick='download_attempt({{attempt.id}})' class='btn btn-info'>Download Response</button></td>
+                                {% endif %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+
+        <hr/>
+
+        <div id='response-view'>
+        
+        </div>
+    </div>
+
+{% endblock content %}
+
+
+{% block javascript %}
+
+<script>
+//$('#div-enter-button').click(confirm_attempt);
+
+var confirm_attempt = function() {
+    var ok = window.confirm("Are you sure you want to Start the quiz? ");
+    if (ok) {
+        href = '/quiz';
+        message = 'You are being redirected to the quiz. Please wait...';
+        time = 2000;
+        redirectHandler(href, message, time);
+    }
+};
+
+</script>
+
+<script>
+//Handles the redirection by showing a modal like div with given message
+var redirectHandler = function (href, message, time){
+    //check if already redirect div is there
+    message = message || '';
+    time = time || 1000;
+    div = $('#redirect-div');
+    if (div[0] != null){
+        clearTimeout(div[0].timeout);
+        div[0].parentElement.removeChild(div[0]); //Remove the element
+    }
+        //Blur the whole content-body div.
+        $('#content-body').css('filter','blur(5px)');
+        //Add a div on the body
+        new_div = document.createElement('div');
+        new_div.id = 'redirect-div';
+        new_div.classList.add('center-body');
+        new_div.innerHTML = '<span>' + message + '</span>';
+        document.body.appendChild(new_div);
+        if (!(time == null)) {
+            new_div.timeout = setTimeout(function() {
+                window.location.href = href;
+            }, time);
+        }
+}
+</script>
+
+<script type="text/javascript">
+    var show_attempt = function(attempt_id) {
+        //Function to show the details of an attempt
+        //Assuming jQuery is loaded
+        data  = {attempt_id : attempt_id };
+        var div = $('#response-view');
+        $.ajax({
+        type: "POST",
+        url: "attempt_details",
+        data: data,
+        success: function(response) {
+            console.log(response);
+            div.html(response.content);
+        },
+        error: function(){
+            //Store the current serialized data for the form in the postponedRequest object
+            div.innerHTML = "<h5 class='message'>Some error has occurred connecting to server! Please try again...</h5>";
+        }
+        });
+    }
+</script>
+{% endblock javascript %}

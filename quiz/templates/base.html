@@ -1,0 +1,70 @@
+{% load markdown_deux_tags %}
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>iQuiz</title>
+	<!--uncomment following when live-->
+		 <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+		 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">-->
+		 <!-- comment out following when live -->
+		 {% load static %}
+		 <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+
+		 <link rel='stylesheet' href="{% static 'css/mystyle.css' %}" >
+		 {% block title %}<title>iQuiz</title>{% endblock title %}
+    <!---	<script type="text/javascript" async
+  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script> -->
+
+{% block head %} 
+{% endblock head %}
+
+</head>
+
+<body>
+	{% block header %}
+	{% endblock header %}
+
+	{% block nav_bar %}
+	{% endblock nav_bar %}
+
+	<div class="container">
+		<div class="row">
+			<div class="col col-12 col-sm-10">
+				{% block content %}
+				{% endblock content %}
+			</div>
+			<div id="sidebar_right" class="col col-12 col-sm-2">
+				{% block sidebar_right %}
+				<div>
+					<a href="home"><button class="btn btn-info">Home</button></a>
+					<a href="edit"><button class="btn btn-info">Edit</button></a>
+					<a href="grades"><button class="btn btn-info">View Grades</button></a>
+					<a href="quiz-settings"><button class="btn btn-info">Setttings</button></a>
+					<a href="publish"><button class="btn btn-info">Publish</button></a>
+				</div>
+				{% endblock sidebar_right %}
+			</div>
+		</div>
+	</div>
+	{% block footer %}
+	<button onClick='gotoTopFunc()' id='gotoTop'></button> 
+	{% endblock footer %}
+
+	<!--Java Scripts-->
+	<script src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
+	<script src="{% static 'js/bootstrap.min.js' %}"></script>
+	<script src="{% static 'js/scroll_control.js' %}"></script>
+
+              <!-- <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+              crossorigin="anonymous"></script>
+              <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"> -->
+
+
+  	{% block javascript %}
+  	{% endblock javascript %}
+	</body>
+</html>
