@@ -77,7 +77,7 @@ def resume_quiz(request, previous_attempt):
     questions_html = list()
     questions_statements = list()  # To be used for creating the Question paper
     question_ids = list()
-    question_types = dict()
+    question_types = list()
     responses = previous_attempt.get_response()  # get the responses of the student for this attempt
     answered_question_ids = []  # will be used to store the ids of the questions which are already answered
 
@@ -93,7 +93,7 @@ def resume_quiz(request, previous_attempt):
             html = question_type.get_student_view_html(question)  # Add the HTML form field input for the question
         questions_html.append((question.id, html))
         question_ids.append(question.id)
-        question_types[question.id] = question_type.CLASS_NAME
+        question_types.append((question.id, question_type.CLASS_NAME))
         questions_statements.append((question.id, question_type.get_statement_html(question)))
 
     return render(
