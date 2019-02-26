@@ -1,4 +1,6 @@
 import json
+from django.urls import reverse
+from django.http import HttpResponse, HttpResponseRedirect
 
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -8,7 +10,9 @@ from ..forms import QuizSettingsForm
 from ..models import QuizManager, Question
 from ..questions import QUESTION_TYPE
 
+
 GET_QUESTION_TYPE_NAME = 'question_type'
+
 
 
 def index(request):
@@ -189,19 +193,35 @@ def publish(request):
     """
     Publish the quiz : copy all the draft question data columns to the live data columns.
     """
-    quiz = db.get_quiz(request)
-    quiz.published = True
-    # Copy all the draft fields to the published fields
-    questions = db.get_questions_by_quiz(quiz)
-    for question in questions:
-        question.statement = question.draft_statement
-        question.options_data = question.draft_options_data
-        question.expected_response = question.draft_expected_response
-        question.published = True
-        question.save()
+    confirm_publish = request.GET.get('confirm_publish', False)
+    confirm_delete = request.GET.get('confirm_delete', False)
 
-    quiz.save()
-    return render(request, "manager.html", {"name": lti.get_user_name(request), 'message': "The quiz has been published and updated <br/>Please go to Home!"})
+    if confirm_publish:
+        quiz = db.get_quiz(request)
+        quiz.published = True
+        # Copy all the draft fields to the published fields
+        questions = db.get_questions_by_quiz(quiz)
+        for question in questions:
+            question.statement = question.draft_statement
+            question.options_data = question.draft_options_data
+            question.expected_response = question.draft_expected_response
+            question.published = True
+            question.save()
+
+        quiz.save()
+        return render(request, "manager.html", 
+            {
+            "name": lti.get_user_name(request), 
+            'message': "The quiz has been published and updated <br/>Please go to Home!"}
+            )
+    if confirm_delete:
+        #delete the quiz
+        quiz = db.get_quiz(request)
+        quiz.delete()
+        return HttpResponseRedirect(reverse('index',))
+
+    return render(request, "publish.html")
+
 
 
 def get_attempts_detail(response, quiz):

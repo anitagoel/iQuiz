@@ -80,7 +80,7 @@ class MCQ:
 
         else:
             form = MCQForm(instance=question)
-        return render(request, 'mcq-form.html', {'form': form, 'success': False, 'message': message, 'options': options,
+        return render(request, 'questions/mcq-form.html', {'form': form, 'success': False, 'message': message, 'options': options,
                                                  'expected_option_id': expected_option_id})
 
     @staticmethod

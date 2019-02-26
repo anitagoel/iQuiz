@@ -32,7 +32,16 @@
 			</table>
 		</div>
 	</div>
+	{% else %}
+
+	<div id="heading">
+		<hr/>
+		<h2>Welcome to iQuiz!</h2>
+		<p>There are no questions yet! Please add the question by clicking the buttons given below.
+		</p>
+	</div>
 	{% endif %}
+	<hr/>
 	
 	<div class="addQuestionButtons">
 		<a href="add_question?question_type=MCQ"><button class="btn btn-info">Add MCQ</button></a>
