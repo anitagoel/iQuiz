@@ -132,7 +132,7 @@
 var question_ids = [];  // stores the question ids of the question.
 var question_types = {}; // stores the question types for each question [corresponds to question_ids]
 
-{% for qid, question_type in question_types.items %}
+{% for qid, question_type in question_types %}
 	question_types[{{qid}}] = '{{question_type}}';
 	question_ids.push({{qid}});
 {% endfor %}
