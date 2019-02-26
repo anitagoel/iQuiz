@@ -1,20 +1,18 @@
 var current_question_index = 0;
 var postponedRequest = {};
 var response_timing = {};
-
-var exclusiveQuestionButtonState = ['unvisited', 'not-answered', 'answered', 'marked']; //The classes available for styling the question buttons
-jumpToQuestion(question_ids[current_question_index]);
+//The css classes available for styling the question buttons
+var exclusiveQuestionButtonState = ['unvisited', 'not-answered', 'answered', 'marked'];
+jumpToQuestion(question_ids[current_question_index]); //Jump to the first question
 
 function len(obj) { return Object.keys(obj).length; }
 
-function mark_already_answered(){
-	for (qid in answered_question_ids){
-			changeButtonState(qid, "answered");
-		}
-	}
+answered_question_ids.forEach(function(qid, index) {
+    changeButtonState(qid, "answered");
+    }
+);
 
 updateAnswerNumberButtons ();
-mark_already_answered();
 var submitted = false;
 
 function submit() {
@@ -82,24 +80,38 @@ function getButtonState(qid){
 	else return "None";
 
 }
-
+/**
+ * The function validate_data searches if any validate_data function for given qid is defined.
+ * The expected name of the function is validate_data_
+**/
+function validate_data(data, qid){
+    validator = response_validators[question_types[qid]];
+    if (validator)
+        return validator(data);
+    return data
+}
 function save_and_next(qid){
 	//Mark as visited
 	current_question_index = question_ids.indexOf(qid);
 	console.log("index is changed to :" + current_question_index );
-	changeButtonState(qid, "answered");
-	//Serialize the form with given question_id
+	//Perform following only if the form is actually filled/question is answered
+	var form = $('#form-question-' + qid);
+	//validate that required fields are there before sending the response
+	//Serialize the form associated with given question_id
 	data = $('#form-question-' + qid).serialize();
-	request = [qid, data];
-	success = saveResponseAjax(request);
+	if (data && validate_data(data, qid)){
+        changeButtonState(qid, "answered");
+        request = [qid, data];
+        success = saveResponseAjax(request);
+    }
 
-	if (current_question_index < question_ids.length - 1) {
-		jumpToQuestion(question_ids[current_question_index+1]);
-	}
-	else{
-		console.log("This is the last question!");
-	}
-	updateAnswerNumberButtons ();
+    if (current_question_index < question_ids.length - 1) {
+        jumpToQuestion(question_ids[current_question_index+1]);
+    }
+    else{
+        console.log("This is the last question!");
+    }
+    updateAnswerNumberButtons ();
 }
 
 function mark_for_review_and_next(qid){
@@ -114,7 +126,7 @@ function saveResponseAjax(request){
 	success = false;
 	$.ajax({
     type: "POST",
-    url: "quiz/saveResponse",
+    url: "quiz/save_response",
     data: data,
     success: function(response) {
      	if ('error' in response){
@@ -134,7 +146,7 @@ function saveResponseAjax(request){
     },
     error: function(){
     	postponedRequest[question_id] = data;
-    	pollServerConnection(); //Keep polling the server until successfull.
+    	pollServerConnection(); //Keep polling the server until successful
     }
     });
 	return success;
@@ -158,7 +170,7 @@ function sendPostponedRequests(){
 function pollServerConnection() {
 	$.ajax({
     type: "POST",
-    url: "quiz/saveResponse",
+    url: "quiz/save_response",
     data: 'checking-connection=True',
     success: function(response) {
 		$('#offline').hide();
@@ -176,11 +188,14 @@ function pollServerConnection() {
 function jumpToQuestion(qid){
 	if (question_ids.indexOf(qid) == -1) return;
 	$('#div-question-' + question_ids[current_question_index]).addClass('hidden-question');
+	$('#id-question-button-'+ question_ids[current_question_index] ).removeClass('active-button');
 	current_question_index = question_ids.indexOf(qid); //update the current question to the given question
 	$('#div-question-' + qid).removeClass('hidden-question');
+	$('#id-question-button-'+ qid ).addClass('active-button');
+
 	if (!(getButtonState(qid) == "answered" || getButtonState(qid) == "marked")) changeButtonState(qid, "not-answered");
 	updateAnswerNumberButtons ();
-/**
+/** //TODO: Add this part for collecting data for analytics
 	if (current_section_start_time == null){
 		current_section_start_time = Date.now();
 	}

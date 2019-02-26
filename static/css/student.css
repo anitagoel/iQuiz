@@ -43,6 +43,7 @@ body{
 
 
 .question-button {
+  box-shadow: -1px 1px 1px 1px #7b7b7b;
   border:none;
   border-radius: 10px;
   color: white;
@@ -133,6 +134,7 @@ body{
 }
 
 .disabled-palette-button{
+  box-shadow: 0px 0px 0px 0px #7b7b7b;
   transition:  all 0.5s;
   background-color: black !important;
   color:black;
@@ -164,12 +166,11 @@ body{
 
 
 .student_home_buttons {
-	width:100%;
+	align:center;
 }
 
 .student_home_item {
-  margin:10px;
-  background-color: #4CAF50; 
+  margin:15px;
   border: none;
   color: white;
   padding: 15px 32px;
@@ -179,8 +180,28 @@ body{
   font-size: 20px;
 }
 
-.student_home_item:hover {
-	background-color:  #4CBF50;
+#information_modal_button {
+    float:right;
+}
+.active-button{
+   box-shadow: -5px 5px 5px 2px #7b7b7b;
+   transition: all 0.5s;
+}
+
+#quiz-top-bar{
+    padding:10px;
+    margin:20px;
+}
+.question_statement_in_paper {
+    padding:10px;
+    margin:5px;
+    width:100%;
+    transition: all 0.5s;
+}
+
+.question_statement_in_paper:hover{
+    border: solid 1px #8c8c8c;
+
 }
 
 .content-body {
