@@ -61,12 +61,8 @@ class TFQ(AbstractQuestion):
                 qs.draft_expected_response = correct_option_id
                 qs.save()
                 message = "The question is saved/updated successfully!"
-                return render(
-                    request,
-                    'questions/tfq-form.html',
-                    dict(form=form, success=True, message=message,
-                         correct_option_id=correct_option_id, top_h3=TFQ.top_h3)
-                )
+                return HttpResponseRedirect(reverse('edit'))
+
         else:
             form = TFQForm(instance=question)
         return render(

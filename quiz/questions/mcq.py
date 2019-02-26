@@ -3,8 +3,12 @@ import json
 import markdown_deux
 from django import forms
 from django.shortcuts import render
+from django.http import HttpResponse, HttpResponseRedirect
+from django.urls import reverse
+
 from django.template import loader
 from pagedown.widgets import PagedownWidget
+
 
 from quiz.utils import lti_utils as lti
 from ..models import Question
@@ -34,9 +38,11 @@ class MCQ:
     def get_edit_view(request, question):
         """
         The function returns the Manager view of the MCQ as a view.
+        On success return to HttpResponseRedirect(reverse('edit')). 
         """
         question.question_type = MCQ.CLASS_NAME
-        message = "Please make sure form is valid!"
+        template = 'questions/mcq-form.html'
+        message = None
         # Validate that manager is viewing this page
         if question.draft_options_data and question.draft_options_data != '':
             options = json.loads(question.draft_options_data)
@@ -51,13 +57,13 @@ class MCQ:
 
             if MCQ.DRAFT_OPTIONS not in request.POST or len(options_list) < 2:
                 message = "Add at least two options!"
-                return render(request, 'questions/mcq-form.html',
+                return render(request, template,
                               {'form': form, 'success': False, 'message': message, 'options': options,
                                'expected_option_id': expected_option_id})
 
             if MCQ.CORRECT_RESPONSE not in request.POST:
                 message = "Please select the correct response!"
-                return render(request, 'questions/mcq-form.html',
+                return render(request, template,
                               {'form': form, 'success': False, 'message': message, 'options': options,
                                'expected_option_id': expected_option_id})
             else:
@@ -74,13 +80,11 @@ class MCQ:
                 qs.draft_options_data = json.dumps(option_tuples)
                 qs.save()
                 message = "The question is saved/updated successfully!"
-                return render(request, 'questions/mcq-form.html',
-                              dict(form=form, success=True, message=message, options=option_tuples,
-                                   expected_option_id=expected_option_id))
+                return HttpResponseRedirect(reverse('edit'))
 
         else:
             form = MCQForm(instance=question)
-        return render(request, 'questions/mcq-form.html', {'form': form, 'success': False, 'message': message, 'options': options,
+        return render(request, template, {'form': form, 'success': False, 'message': message, 'options': options,
                                                  'expected_option_id': expected_option_id})
 
     @staticmethod

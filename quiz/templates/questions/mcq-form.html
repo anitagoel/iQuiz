@@ -10,18 +10,21 @@
 <div>
 	<h2>Add/Edit Question</h2>
 
-	{% if success %}
-	<div class="alert alert-success fade in">
-    <a href="#" class="close" data-dismiss="alert">&times;</a>
-    <strong>Success!</strong>  The question is updated!
-	</div>
-	{% else %}
+		{% if success %}
+			<div class="alert alert-success fade in">
+		    <a href="#" class="close" data-dismiss="alert">&times;</a>
+		    <strong>Success!</strong>  The question is updated!
+			</div>
+			{% else %}
 
-	<div class="alert alert-warning fade in">
-    <a href="#" class="close" data-dismiss="alert">&times;</a>
-    <strong>Note:</strong> {{ message }}
-	</div>
-	{% endif %}
+			{% if message %}
+				<div class="alert alert-warning fade in">
+			    <a href="#" class="close" data-dismiss="alert">&times;</a>
+			    <strong>Note:</strong> {{ message }}
+				</div>
+			{% endif %}
+		{% endif %}
+
  	<div class=''>
     <form class="form-horizontal" method="POST" class="post-form"> {% csrf_token %}
     	<div class="table-responsive">
@@ -31,7 +34,7 @@
 
 	   		{% for option_id, option_value in options %}
 	   		<tr id='row-{{option_id}}'>
-	   			<th><input type="radio" name="correct_option" {% if expected_option_id == option_id %} checked="checked" {% endif %} value="{{option_id}}"> <label for="id_draft_options_{{ forloop.counter }}">Option {{ forloop.counter }} </label></th>
+	   			<th><input type="radio" name="correct_option" {% if expected_option_id == option_id %} checked="checked" {% endif %} value="{{option_id}}" required> <label for="id_draft_options_{{ forloop.counter }}">Option {{ forloop.counter }} </label></th>
 				  	<td>
 					  	<div class="wmd-wrapper" id="id_draft_options_{{ forloop.counter }}-wmd-wrapper">
 					    	<div class="wmd-panel">

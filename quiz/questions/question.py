@@ -19,7 +19,8 @@ class AbstractQuestion(ABC):
     @abstractmethod
     def get_edit_view(request, question):
         """
-        The function returns the Manager view of the question as a django view response
+        The function returns the Manager view of the question as a django view response.
+        On success return to HttpResponseRedirect(reverse('edit')). 
         """
         return HttpResponse("Not Implemented")
 

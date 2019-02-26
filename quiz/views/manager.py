@@ -123,9 +123,10 @@ def edit(request):
         questions_list.append(question_dict)
     return render(request, 'edit.html', {'questions': questions_list})
 
+
 @csrf_exempt
 @validate_manager
-def edit_question(request):
+def edit_question(request, question=None):
     # Check if the quiz is ever attempted
     quiz = db.get_quiz(request)
     if quiz.isEverAttempted:
@@ -137,12 +138,15 @@ def edit_question(request):
                 'message': 'The quiz cannot be edited as it is attempted by at least one student!'
             }
         )
-    
+    if question: 
+        return question_type.get_edit_view(request, question)
+
     if 'qid' not in request.GET:
         return edit(request)
 
-    question = Question.objects.get(id = request.GET.get('qid'), quiz=quiz)
-    if not question:
+    try:
+        question = Question.objects.get(id = request.GET.get('qid'), quiz=quiz)
+    except Question.DoesNotExists:
         return edit(request)
 
     if request.GET.get('confirm_delete', False):
@@ -157,6 +161,9 @@ def edit_question(request):
 @csrf_exempt
 @validate_manager
 def add_question(request):
+    """
+    Creates a new question and returns the edit panel for the same.
+    """
     quiz = db.get_quiz(request)
     if quiz.isEverAttempted:
         return render(
@@ -167,13 +174,14 @@ def add_question(request):
                 'message': 'The quiz cannot be edited as it is attempted by at least one student!'
             }
         )
-    
+
     question_type_name = request.GET.get(GET_QUESTION_TYPE_NAME, '')
     if question_type_name not in QUESTION_TYPE:
         return edit(request)
     question_type = QUESTION_TYPE[question_type_name]
     question = Question(quiz=quiz)        # create a new Question for the quiz
     quiz_questions = db.get_questions_by_quiz(quiz)
+
     if quiz_questions:
         last_question_index = quiz_questions.count() - 1
         question.serial_number = quiz_questions[last_question_index].serial_number + 1 #Set the serial number for the question
