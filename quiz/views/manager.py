@@ -14,7 +14,7 @@ from ..questions import QUESTION_TYPE
 GET_QUESTION_TYPE_NAME = 'question_type'
 
 
-
+@validate_manager
 def index(request):
     manager = db.get_user(request)     # Save the Manager's details if doesn't exists already
     quiz = db.get_quiz(request)
@@ -25,9 +25,10 @@ def index(request):
         quiz_manager = QuizManager(quiz=quiz, manager=manager)
         quiz_manager.save()
         return new_manager_tour(request)  # return the home page for the new user
-    return home(request)
+    return HttpResponseRedirect(reverse('home'))
 
 
+@validate_manager
 def home(request):
     """
     The home view for the manager. It shows the latest live quiz if it exists.
@@ -64,6 +65,7 @@ def home(request):
 
 
 # TODO : To be implemented
+@validate_manager
 def new_manager_tour(request):
     """
     The view to show the tour to the iQuiz to the manager.

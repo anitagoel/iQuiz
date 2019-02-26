@@ -24,26 +24,27 @@ def index(request):
 def home(request):
     student = db.get_user(request)
     quiz = db.get_quiz(request)
-    # Save/Update the OutcomeServiceData in the database
-    lis_result_sourcedid = lti.get_result_sourced_id(request)
-    lis_outcome_service_url = lti.get_outcome_service_url(request)
-    if lis_result_sourcedid and lis_outcome_service_url:
-        # Check if outcomeServiceData object already exists, then update it.
-        outcome_service, created = OutcomeServiceData.objects.get_or_create(user=student, quiz=quiz)
-        outcome_service.lis_result_sourcedid = lti.get_result_sourced_id(request)
-        outcome_service.lis_outcome_service_url = lti.get_outcome_service_url(request)
-        outcome_service.save()
+    if quiz:
+        # Save/Update the OutcomeServiceData in the database
+        lis_result_sourcedid = lti.get_result_sourced_id(request)
+        lis_outcome_service_url = lti.get_outcome_service_url(request)
+        if lis_result_sourcedid and lis_outcome_service_url:
+            # Check if outcomeServiceData object already exists, then update it.
+            outcome_service, created = OutcomeServiceData.objects.get_or_create(user=student, quiz=quiz)
+            outcome_service.lis_result_sourcedid = lti.get_result_sourced_id(request)
+            outcome_service.lis_outcome_service_url = lti.get_outcome_service_url(request)
+            outcome_service.save()
 
-    quiz_settings = db.get_quiz_settings(quiz)
-    information = quiz_settings.information
-    attempts = get_attempts_detail(request)
-    # Check if the student has attempt left or not, if the handle is not None, then
-    # we need to return the handle itself.
-    handle = handle_previous_attempt(request)
-    if handle:
-        return handle
-    if quiz and quiz.published:
-        return render(request, 'student.html', {'attempts': attempts, 'information': information})
+        quiz_settings = db.get_quiz_settings(quiz)
+        information = quiz_settings.information
+        attempts = get_attempts_detail(request)
+        # Check if the student has attempt left or not, if the handle is not None, then
+        # we need to return the handle itself.
+        handle = handle_previous_attempt(request)
+        if handle:
+            return handle
+        if quiz and quiz.published:
+            return render(request, 'student.html', {'attempts': attempts, 'information': information})
 
     return render(request, 'error.html', {'success': False, 'message': "The quiz cannot be found! Please try later!"})
 
