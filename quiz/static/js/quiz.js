@@ -216,10 +216,10 @@ function jumpToQuestion(qid){
 	//Update the slider for navigation
 	$("#questions-slider-nav").val(index+1);
 
-	$('#div-question-' + question_ids[current_question_index]).addClass('hidden-question');
+	$('#div-question-' + question_ids[current_question_index]).addClass('hidden-question').removeClass('animated fadeIn');;
 	$('#id-question-button-'+ question_ids[current_question_index] ).removeClass('active-button');
 	current_question_index = index; //update the current question to the given question
-	$('#div-question-' + qid).removeClass('hidden-question');
+	$('#div-question-' + qid).removeClass('hidden-question').addClass('animated fadeIn');
 	$('#id-question-button-'+ qid ).addClass('active-button');
 
 	if (!(getButtonState(qid) == "answered" || getButtonState(qid) == "marked")) changeButtonState(qid, "not-answered");
@@ -245,8 +245,10 @@ function jumpToQuestion(qid){
 
 function show_all_questions_in_palette(){
 	//Function shows all the question palette buttons back, and hides the button.
-	$('#div-question-palette').find('.question-button').prop('disabled', false).removeClass('disabled-palette-button');
+	$('#div-question-palette').find('.question-button').prop('disabled', false).removeClass('disabled-palette-button').removeClass('active-button');
 	$('#palette-back-button').css('visibility', 'hidden').css('opacity', '0');
+	qid = question_ids[current_question_index];
+	$('#id-question-button-'+ qid ).addClass('active-button');
 
 }
 
@@ -255,10 +257,9 @@ function show_questions_in_palette(type){
 	console.log(type);
 	valid_types = ['answered','not-answered', 'unvisited', 'marked'];
 	if (valid_types.indexOf(type) == -1) return;
-
 	$('#palette-back-button').css('visibility', 'visible').css('opacity', '1');;
-	$('#div-question-palette').find('.question-button').prop('disabled', true).addClass('disabled-palette-button');
-	$('#div-question-palette').find('.question-button.' + type).prop('disabled', false).removeClass('disabled-palette-button');
+	$('#div-question-palette').find('.question-button').prop('disabled', true).addClass('disabled-palette-button').removeClass('active-button');
+	$('#div-question-palette').find('.question-button.' + type).prop('disabled', false).removeClass('disabled-palette-button').addClass('active-button');
 }
 
 

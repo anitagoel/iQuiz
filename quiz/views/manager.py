@@ -38,10 +38,13 @@ def home(request):
     The home view for the manager. It shows the latest live quiz if it exists.
     """
     quiz = db.get_quiz(request)
+    if not quiz:
+        message = "Quiz not found! Please click the link from the LMS again to recreate the quiz"
+        return render(request, "error.html", {'message': message})
     if not quiz.published:
         message = 'You have not published the Quiz yet! <br/>Please click edit button to ' \
                   'start editing the quiz, or publish it!'
-        return render(request, "manager.html", {"name": lti.get_user_name(request), 'message': message})
+        return render(request, "manager.html", {'message': message})
 
     # Show the questions of the quiz
     # TODO: show student view complete
