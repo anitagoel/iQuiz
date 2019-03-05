@@ -13,7 +13,8 @@ class AbstractQuestion(ABC):
     # POST Request Variable name as used in templates
     DRAFT_OPTIONS = "draft_options"
     DRAFT_STATEMENT = "draft_statement"
-    CORRECT_RESPONSE = "correct_option"  # use any sort of names which suits you and your template
+    # use any sort of names which suits you and your template
+    CORRECT_RESPONSE = "correct_option"
 
     @staticmethod
     @abstractmethod
@@ -34,6 +35,8 @@ class AbstractQuestion(ABC):
         :return: string : html representation of the statement of the question
         """
         return ''
+
+    @staticmethod
     @abstractmethod
     def get_draft_statement_html(question):
         """

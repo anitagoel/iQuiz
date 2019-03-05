@@ -1,34 +1,25 @@
-{% extends 'base.html' %}
 {% load markdown_deux_tags %}
 {% load static %}
 
 {%block head %}
 	{{ form.media }}
 	<link rel="stylesheet" href="{% static 'pagedown/custom.css' %}">
-{% endblock head %}
-{% block content %}
+				{% endblock head %}
+		{% block content %}
 <div>
 	<h2>Add/Edit Question</h2>
-
-	{% if success %}
-	<div class="alert alert-success fade in">
-    <a href="#" class="close" data-dismiss="alert">&times;</a>
-    <strong>Success!</strong>  The question is updated!
-	</div>
-	{% else %}
-
-	<div class="alert alert-warning fade in">
-    <a href="#" class="close" data-dismiss="alert">&times;</a>
-    <strong>Note:</strong> {{ message }}
-	</div>
-	{% endif %}
-
+	<h3>True False Question</h3>
  	<div class=''>
-    <form class="form-horizontal" method="POST" class="post-form"> {% csrf_token %}
+    <form id="form_id" action="edit_question" class="form-horizontal" method="POST" class="post-form">
+    	 {% if not qid %}
+    	<input type="hidden" id="question-type" name="question_type" value="TFQ">
+    	{% else %}
+    	<input type="hidden" id="qid-form" name="qid" value="{{qid}}">
+		{% endif %}
     	<div class="table-responsive">
 	   		<table  class='table table-bordered table-striped table-highlight'>
 	   		<tbody id="form-table">
-			<tr><h3>{{top_h3}}</h3></tr>
+			<tr><h4>{{top_heading}}</h4></tr>
 	   		{{ form }}
 	   		</tbody>
 	  		</table>
@@ -59,6 +50,21 @@
 
 
 {% block javascript %}
+
+
+<script>
+//Script for form submission using AJAX
+$("#form_id").submit(function(e) {
+    e.preventDefault(); // avoid to execute the actual submit of the form.
+    var form = $(this);
+    var url = form.attr('action');
+    var data = form.serialize();
+    replace_content(url, {'form-save-request' : true},  data);
+});
+</script>
+
+
+
 <script>
 //Handles focussed element
 $('textarea').focus(function () {
@@ -66,6 +72,8 @@ $('textarea').focus(function () {
 })
 $('textarea').blur(function () {
 	$('#' + this.id + '_wmd_preview').hide();
-})
+});
+
+DjangoPagedown.init();
 </script>
 {% endblock javascript %}

@@ -1,10 +1,10 @@
-{% extends 'student_base.html' %}
 {% load markdown_deux_tags %}
 {% load static %}
-{% block head_ext %}
-	<link rel='stylesheet' href="{% static 'css/responded_question_paper.css' %}" >
-{% endblock %}
-
+<script>
+//loader for css
+if (!$('head #responded-question-paper-css')[0])
+	$('head').append(`<link id="responded-question-paper-css" rel="stylesheet" type="text/css" href="{% static 'css/responded-question-paper.css' %}">`);
+</script>
 {% block content %}
     {% if message %}
         {% if success %} <div class="alert alert-info fade in">
@@ -18,39 +18,39 @@
 	<div id="response-info" class="table-responsive">
 	<table class='table table-bordered table-striped table-highlight'>
 	    <tbody>
-	    <tr>
-	        <th>Total Question</th>
-	        <td>{{attempt_details.total_questions}}</td>
-	    </tr>
-        <tr>
-            <th>Correct Answers</th>
-            <td>{{attempt_details.correct}}</td>
-        </tr>
-        <tr>
-            <th>Incorrect Answers</th>
-            <td>{{attempt_details.incorrect}}</td>
-        </tr>
-         <tr>
-            <th>Unattempted Questions</th>
-            <td>{{attempt_details.unanswered}}</td>
-        </tr>
-	    <tr>
-	        <th>Allowed Time</th>
-	        <td>{{attempt_details.allowed_time}}</td>
-	    </tr>
-	    <tr>
-	        <th>Attempt Start Time</th>
-	        <td>{{attempt_details.start_time}} (UTC)</td>
-	    </tr>
-	    <tr>
-	        <th>Attempt Duration</th>
-	        <td>{{attempt_details.duration}}</td>
-	    </tr>
+		    <tr>
+		        <th>Total Question</th>
+		        <td>{{attempt_details.total_questions}}</td>
+		    </tr>
+	        <tr>
+	            <th>Correct Answers</th>
+	            <td>{{attempt_details.correct}}</td>
+	        </tr>
+	        <tr>
+	            <th>Incorrect Answers</th>
+	            <td>{{attempt_details.incorrect}}</td>
+	        </tr>
+	         <tr>
+	            <th>Unattempted Questions</th>
+	            <td>{{attempt_details.unanswered}}</td>
+	        </tr>
+		    <tr>
+		        <th>Allowed Time</th>
+		        <td>{{attempt_details.allowed_time}}</td>
+		    </tr>
+		    <tr>
+		        <th>Attempt Start Time</th>
+		        <td>{{attempt_details.start_time}} (UTC)</td>
+		    </tr>
+		    <tr>
+		        <th>Attempt Duration</th>
+		        <td>{{attempt_details.duration}}</td>
+		    </tr>
 
-	    <tr>
-	        <th>Total Grade</th>
-	        <td>{{attempt_details.total_grade_percent}}</td>
-	    </tr>
+		    <tr>
+		        <th>Total Grade</th>
+		        <td>{{attempt_details.total_grade_percent}}</td>
+		    </tr>
 	    </tbody>
 	</table>
 	</div>

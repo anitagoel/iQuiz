@@ -1,0 +1,17 @@
+{% load markdown_deux_tags %}
+{% load static %}
+
+{% block content %}
+{% if message %}
+    {% if success %}
+    <div class="alert alert-info  animated bounce">
+    {% else %}
+    <div class="alert alert-warning animated bounce">
+    {% endif %}
+    {{ message|safe }}
+    </div>
+{% endif %}
+
+{% endblock content %}
+
+

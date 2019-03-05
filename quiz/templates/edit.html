@@ -1,52 +1,45 @@
-{% extends 'base.html' %}
 {% load markdown_deux_tags %}
 {% load static %}
 
 {% block content %}
+{% if questions %}
+<div class="questions" style="display:inline-block; width:100%;">
+    <div width="100%" class="table-responsive">
+        <table class='table table-bordered table-striped table-highlight'>
+            <tbody>
+            {% for question in questions %}
+            <tr>
+                <td>{{forloop.counter}}</td>
+                <td><h4> {{question.draft | safe}} </h4></td>
+                <td>
+                    <button onClick="replace_content(
+						'edit_question', {qid:{{question.qid}} })" class='btn btn-info'>Edit
+                    </button>
+                </td>
+                <td>
+                    <button onClick="delete_question({{question.qid}})" class='btn btn-info'>Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
 
-    {% if message %}
-        {% if success %} <div class="alert alert-info fade in">
-        {% else %} <div class="alert alert-warning fade in"> {% endif %}
-            <a href="#" class="close" >&times;</a>
-            {{ message|safe }}
-            </div>
-    {% endif %}
+<div id="heading">
+    <hr/>
+    <h2>Welcome to iQuiz!</h2>
+    <p>There are no questions yet! Please add the question by clicking the buttons given below.
+    </p>
+</div>
+{% endif %}
+<hr/>
 
-	{% if questions %}
-	<div class = "questions" style="display:inline-block; width:100%;">
-		<div width = "100%" class="table-responsive">
-	   		<table  class='table table-bordered table-striped table-highlight'>
-	   			<tbody>
-	   			 	{% for question in questions %}
-					 <tr><td>{{forloop.counter}}</td><td><h4> {{question.draft | safe}} </h4></td>
-						 <td><a href='edit_question?qid={{question.qid}}'>
-							 <button class='btn btn-info'>Edit</button>
-						 </a>
-						 </td>
-						 <td>
-							 <button onClick="delete_question({{question.qid}})" class='btn btn-info'>Delete</button>
-						 </td>
-					 </tr>
-					 {% endfor %}
-				</tbody>
-			</table>
-		</div>
-	</div>
-	{% else %}
-
-	<div id="heading">
-		<hr/>
-		<h2>Welcome to iQuiz!</h2>
-		<p>There are no questions yet! Please add the question by clicking the buttons given below.
-		</p>
-	</div>
-	{% endif %}
-	<hr/>
-	
-	<div class="addQuestionButtons">
-		<a href="add_question?question_type=MCQ"><button class="btn btn-info">Add MCQ</button></a>
-		<a href="add_question?question_type=TFQ"><button class="btn btn-info">Add TFQ</button></a>
-	</div>
+<div class="addQuestionButtons btn-group-vertical">
+    <button onClick="replace_content('edit_question', {question_type:'MCQ'})" class="btn btn-default">Add MCQ</button>
+    <button onClick="replace_content('edit_question', {question_type:'TFQ'})" class="btn btn-default ">Add TFQ</button>
+</div>
 
 {% endblock content %}
 
@@ -56,12 +49,14 @@
 		ok = confirm("Are you sure you want to delete this question?");
 		if (!ok) return;
 		ok2 = confirm("Really!?");
-			if (ok2){
+		if (ok2){
 				//send delete request
-				ref="edit_question?qid=" + qid + "&confirm_delete=true";
-				window.location = ref;
+				ref="edit_question";
+				data_extra = {qid:qid, confirm_delete:true};
+				replace_content(ref, data_extra);
 			}
-	}
+	};
 
 </script>
 {% endblock %}
+

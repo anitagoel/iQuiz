@@ -1,8 +1,9 @@
 import datetime
 import json
+from django.utils import timezone
 
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
@@ -13,11 +14,12 @@ from ..models import Question, Response, OutcomeServiceData
 from ..questions import QUESTION_TYPE
 
 CONSUMERS = settings.LTI_OAUTH_CREDENTIALS
+CLEAR_RESPONSE = "clear_response"   # POST attribute for clearing the response (used by save_response function)
 
 
 @validate_user
 def index(request):
-    return home(request)
+    return HttpResponseRedirect('student')
 
 
 @validate_user
@@ -38,13 +40,24 @@ def home(request):
         quiz_settings = db.get_quiz_settings(quiz)
         information = quiz_settings.information
         attempts = get_attempts_detail(request)
+        questions = db.get_published_questions(quiz)  # returns QuerySet of the published questions
+        total_questions_number = questions.count()
+        max_attempts = quiz_settings.maxAttempts
+        duration = quiz_settings.duration
+
         # Check if the student has attempt left or not, if the handle is not None, then
         # we need to return the handle itself.
         handle = handle_previous_attempt(request)
         if handle:
             return handle
         if quiz and quiz.published:
-            return render(request, 'student.html', {'attempts': attempts, 'information': information})
+            return render(request, 'student.html', {
+                'attempts': attempts, 
+                'information': information,
+                'max_attempts' : max_attempts,
+                'total_questions_number' : total_questions_number,
+                'duration' : duration,
+                })
 
     return render(request, 'error.html', {'success': False, 'message': "The quiz cannot be found! Please try later!"})
 
@@ -57,15 +70,18 @@ def resume_quiz(request, previous_attempt):
     :param previous_attempt: Response class object which represents the live attempt
     :return: Django request response
     """
+
+    
     quiz = db.get_quiz(request)
     questions = db.get_published_questions(quiz)  # returns QuerySet of the published questions
     end_time_stamp = previous_attempt.end_time.timestamp()
     # time left in milliseconds if end_time_stamp is there
-    time_left = (end_time_stamp - datetime.datetime.utcnow().timestamp()) * 1000 if end_time_stamp else None
+    time_left = (end_time_stamp -  datetime.datetime.utcnow().timestamp()) * 1000 if end_time_stamp else None
     quiz_settings = db.get_quiz_settings(quiz)
     information = quiz_settings.information
+    total_questions_number = questions.count()
 
-    if questions.count() == 0:
+    if total_questions_number == 0:
         return render(
             request,
             "error.html",
@@ -95,20 +111,23 @@ def resume_quiz(request, previous_attempt):
         question_ids.append(question.id)
         question_types.append((question.id, question_type.CLASS_NAME))
         questions_statements.append((question.id, question_type.get_statement_html(question)))
-
-    return render(
-        request,
-        'quiz.html',
-        {
+    
+    context =  {
             'questions_html': questions_html,
             'question_ids': question_ids,
             'question_statements': questions_statements,
             'question_types': question_types,
             'information': information,
             'time_left': time_left,
-            'answered_question_ids': answered_question_ids
+            'answered_question_ids': answered_question_ids,
         }
-    )
+
+    if request.is_ajax():
+        template = loader.get_template('quiz-body.html')
+        content = template.render(context)
+        return JsonResponse({'content' : content})
+    else:
+        return render(request, 'quiz.html', context)
 
 
 @csrf_exempt
@@ -153,7 +172,6 @@ def save_response(request):
     if 'submit' in request.POST:
         # if submit is in request.POST, then its time to submit the quiz!
         submit_response(request, attempt)
-
         message = "Your quiz has been submitted!"
         return JsonResponse(
             {'submit': 'success',
@@ -162,7 +180,11 @@ def save_response(request):
              'time': 5000
              }
         )
-        # TODO: We can show the analytics of the quiz here
+
+    if CLEAR_RESPONSE in request.POST:
+        qid = request.POST.get(CLEAR_RESPONSE)
+        attempt.clear_response(qid)
+        return JsonResponse({'success':'true'})
 
     # add the response to the Response object for the live attempt
     quiz = db.get_quiz(request)
@@ -208,6 +230,8 @@ def send_grade_to_lms(request, attempt):
     outcome_service_url = lti.get_outcome_service_url(request)
     result_sourcedid = lti.get_result_sourced_id(request)
     # if outcome_service_url or result_sourcedid is not available in this request, search the database
+    # It is very unlikely (or maybe impossible) that outcome_service_url will not be in the request itself,
+    # but there is no harm in searching database if we can't find it in the current request ( or is there? )
     if not (outcome_service_url or result_sourcedid):
         try:
             outcome_service_data = OutcomeServiceData.objects.get(user=student, quiz=quiz)
@@ -226,6 +250,7 @@ def send_grade_to_lms(request, attempt):
         lis_result_sourcedid=result_sourcedid,
         score=score
     )
+
     if not post_message(
             CONSUMERS,
             consumer_key,
@@ -233,6 +258,11 @@ def send_grade_to_lms(request, attempt):
             xml
     ):
         raise Exception("Some error occurred while sending grade to the lms.")
+
+    # add the last successfully sent response id and time to the outcome_service_data
+    outcome_service_data = OutcomeServiceData.objects.get_or_create(user=student, quiz=quiz)
+    outcome_service_data.response = attempt
+    outcome_service_data.outcome_send_time = datetime.datetime.utcnow()
         
 
 
@@ -257,7 +287,7 @@ def save_timing_details(request):
 @csrf_exempt
 @validate_user
 def attempt_details(request):
-    # Viewing full response is allowed if :
+    # Viewing full response is allowed to student if :
     # 1. If deadline is not set,
     # 2. If deadline is set and is due.
     # 3. If maxAttempt is not set
@@ -268,7 +298,7 @@ def attempt_details(request):
     quiz_settings = db.get_quiz_settings(quiz)
     full_response_allowed = \
         not quiz_settings.deadline \
-        or quiz_settings.deadline < datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc) \
+        or quiz_settings.deadline <  datetime.datetime.utcnow() \
         or not quiz_settings.maxAttempts \
         or quiz_settings.maxAttempts <= db.get_used_attempt_number(quiz, user)
 
@@ -285,6 +315,12 @@ def attempt_details(request):
         return JsonResponse(
             dict(content='<h4>Invalid Attempt ID, try again or please contact admin for resolution of the error.</h4>')
         )
+
+    # If the user is manager, make sure that the manager is indeed manager of the associated user id.
+    if lti.is_manager(request):
+        full_response_allowed = True    # manager always sees the full response
+
+
 
     if not full_response_allowed:
         # Return the summary for the response
@@ -347,8 +383,7 @@ def get_attempts_details_and_paper(quiz, response_object):
 
 
 def attempt_time_valid(attempt):
-    return datetime.datetime.utcnow().replace(
-        tzinfo=datetime.timezone.utc) <= attempt.end_time + datetime.timedelta(seconds=END_TIME_RELAXATION)
+    return  datetime.datetime.utcnow()  <= attempt.end_time + datetime.timedelta(seconds=END_TIME_RELAXATION)
 
 
 def get_grade(response, quiz):

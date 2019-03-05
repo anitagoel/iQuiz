@@ -1,19 +1,19 @@
-var current_question_index = 0;
-var postponedRequest = {};
-var response_timing = {};
-//The css classes available for styling the question buttons
-var exclusiveQuestionButtonState = ['unvisited', 'not-answered', 'answered', 'marked'];
-jumpToQuestion(question_ids[current_question_index]); //Jump to the first question
+
+function initialize_quiz() { 
+	jumpToQuestion(question_ids[current_question_index]); //Jump to the first question
+	answered_question_ids.forEach(function(qid, index) {
+	    changeButtonState(qid, "answered");
+	    }
+	);
+	updateAnswerNumberButtons ();
+	
+	$("#questions-slider-nav").on('input', function () {
+		jumpToQuestion(question_ids[this.value-1]);
+	});
+}
 
 function len(obj) { return Object.keys(obj).length; }
 
-answered_question_ids.forEach(function(qid, index) {
-    changeButtonState(qid, "answered");
-    }
-);
-
-updateAnswerNumberButtons ();
-var submitted = false;
 
 function submit() {
 	var ok = confirm("Are you sure you want to submit?");
@@ -47,10 +47,10 @@ function check_submit(){
 function changeButtonState(qid, state){
 	switch (state){
 		case exclusiveQuestionButtonState[0]:
-			$('#id-question-button-'+ qid).addClass('btn-dark').addClass('unvisited');
+			$('#id-question-button-'+ qid).addClass('btn-blue-grey').addClass('unvisited');
 			break;
 		case exclusiveQuestionButtonState[1]: //Transition from 
-			$('#id-question-button-'+ qid).removeClass('btn-dark').removeClass('unvisited').addClass('btn-danger').addClass('not-answered');
+			$('#id-question-button-'+ qid).removeClass('btn-blue-grey').removeClass('unvisited').addClass('btn-danger').addClass('not-answered');
 			break;
 		case exclusiveQuestionButtonState[2]:
 			$('#id-question-button-'+ qid).removeClass('btn-info').removeClass('marked').removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
@@ -90,10 +90,11 @@ function validate_data(data, qid){
         return validator(data);
     return data
 }
+
+
 function save_and_next(qid){
 	//Mark as visited
 	current_question_index = question_ids.indexOf(qid);
-	console.log("index is changed to :" + current_question_index );
 	//Perform following only if the form is actually filled/question is answered
 	var form = $('#form-question-' + qid);
 	//validate that required fields are there before sending the response
@@ -109,8 +110,9 @@ function save_and_next(qid){
         jumpToQuestion(question_ids[current_question_index+1]);
     }
     else{
-        console.log("This is the last question!");
+    	jumpToQuestion(question_ids[0]);
     }
+
     updateAnswerNumberButtons ();
 }
 
@@ -118,6 +120,29 @@ function mark_for_review_and_next(qid){
 	save_and_next(qid);
 	changeButtonState(qid, "marked");
 	updateAnswerNumberButtons ();
+}
+
+function clear_response(qid){
+	//Cleares the response of the student for the given qid
+	current_question_state = getButtonState(qid);
+	var form = $('#form-question-' + qid);
+	form[0].reset(); //reset the form and return
+	//Call the response_clearer_function if exists for the given question type
+	clearer_function = response_clearer[question_types[qid]];
+	if (clearer_function) clearer_function(qid); //call the clearer_function if exists
+
+	form.find("input").prop("checked", false);
+	if (current_question_state == "not-answered" || current_question_state == "unvisited") {
+		return;
+	}
+	
+	data = {"clear_response": qid};
+	request = [qid, data];
+	saveResponseAjax(request);
+	//Reset the form for the given qid
+	$('#form-question-' + qid).trigger("reset");
+	changeButtonState(qid, "not-answered");
+	console.log("Response cleared for Question Id: " + qid);
 }
 
 function saveResponseAjax(request){
@@ -186,15 +211,21 @@ function pollServerConnection() {
 }
 
 function jumpToQuestion(qid){
-	if (question_ids.indexOf(qid) == -1) return;
+	index = question_ids.indexOf(qid);
+	if (index == -1) return;
+	//Update the slider for navigation
+	$("#questions-slider-nav").val(index+1);
+
 	$('#div-question-' + question_ids[current_question_index]).addClass('hidden-question');
 	$('#id-question-button-'+ question_ids[current_question_index] ).removeClass('active-button');
-	current_question_index = question_ids.indexOf(qid); //update the current question to the given question
+	current_question_index = index; //update the current question to the given question
 	$('#div-question-' + qid).removeClass('hidden-question');
 	$('#id-question-button-'+ qid ).addClass('active-button');
 
 	if (!(getButtonState(qid) == "answered" || getButtonState(qid) == "marked")) changeButtonState(qid, "not-answered");
 	updateAnswerNumberButtons ();
+
+
 /** //TODO: Add this part for collecting data for analytics
 	if (current_section_start_time == null){
 		current_section_start_time = Date.now();
@@ -226,7 +257,43 @@ function show_questions_in_palette(type){
 	if (valid_types.indexOf(type) == -1) return;
 
 	$('#palette-back-button').css('visibility', 'visible').css('opacity', '1');;
-	console.log($('#div-question-palette').find('.question-buttons'));
 	$('#div-question-palette').find('.question-button').prop('disabled', true).addClass('disabled-palette-button');
 	$('#div-question-palette').find('.question-button.' + type).prop('disabled', false).removeClass('disabled-palette-button');
+}
+
+
+/**
+ *Function for countdown timer.
+**/
+function timer_update() {
+  var now = Date.now();
+  var distance = countDownTime - now;
+
+  // Time calculations for days, hours, minutes and seconds
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24)); //Will not days, hopefully there will be none!!
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  //Ignore days as it must be zero (hopefully!)
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+  hours_str = ("0" + hours).slice(-2);
+  minutes_str = ("0" + minutes).slice(-2);
+  seconds_str = ("0" + seconds).slice(-2);
+  if (hours>0) {
+  document.getElementById("timer-time").innerHTML = hours_str + ':' + minutes_str + ":" + seconds_str;
+	}
+	else {
+		document.getElementById("timer-time").innerHTML =  minutes_str + ":" + seconds_str;
+	}
+  if (hours == 0 && minutes<5) {
+  	if (!($('#timer').hasClass('btn-warning'))) $('#timer').addClass('btn-warning').addClass('animated jello');
+  }
+  if (hours == 0 && minutes<1) {
+  	if (!($('#timer').hasClass('btn-danger'))) $('#timer').removeClass('btn-warning').removeClass('jello').addClass('btn-danger').addClass('jello');
+  }
+  if (distance <= 0) {
+  	//Submit the quiz and exit
+    clearInterval(timerStartedInterval);
+    document.getElementById("timer-time").innerHTML = "00:00:00";
+    force_submit();
+  }
 }

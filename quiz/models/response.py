@@ -24,10 +24,10 @@ class Response(models.Model):
         self.save()
 
     def get_response(self, qid=None):
-        '''
+        """
         Returns the response for the given qid if provided, else the complete response
         is returned.
-        '''
+        """
         response = json.loads(self.response)
         if not qid:
             return response
@@ -36,6 +36,21 @@ class Response(models.Model):
             return response[qid]
         else:
             return False
+
+    def clear_response(self, qid):
+        """
+        Clears the response for the given id by removing the corresponding qid from the response.response.
+        Returns True if the response existed, and is deleted. False if the response didn't exist.
+        """
+        response_dict = json.loads(self.response)
+        qid = str(qid)
+        if qid in response_dict:
+            del response_dict[qid]
+            self.response = json.dumps(response_dict)
+            self.save()
+            return True
+        return False
+
 
     def set_end_time(self):
         quizTime = QuizSettings.objects.get(quiz = self.quiz).duration

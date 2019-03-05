@@ -1,37 +1,28 @@
-{% extends 'base.html' %}
+{% extends 'questions/question-form.html' %}
 {% load markdown_deux_tags %}
 {% load static %}
 
-{%block head %}
+{% block head %}
 	{{ form.media }}
 	<link rel="stylesheet" href="{% static 'pagedown/custom.css' %}">
 {% endblock head %}
+
+
 {% block content %}
 <div>
 	<h2>Add/Edit Question</h2>
-
-		{% if success %}
-			<div class="alert alert-success fade in">
-		    <a href="#" class="close" data-dismiss="alert">&times;</a>
-		    <strong>Success!</strong>  The question is updated!
-			</div>
-			{% else %}
-
-			{% if message %}
-				<div class="alert alert-warning fade in">
-			    <a href="#" class="close" data-dismiss="alert">&times;</a>
-			    <strong>Note:</strong> {{ message }}
-				</div>
-			{% endif %}
-		{% endif %}
-
+	<h3>Multiple Choice Question</h3>
  	<div class=''>
-    <form class="form-horizontal" method="POST" class="post-form"> {% csrf_token %}
+    <form id="form_id" action='edit_question' class="form-horizontal" method="POST" class="post-form">
+    	{% if not qid %}
+    	<input type="hidden" id="question-type" name="question_type" value="MCQ">
+    	{% else %}
+    	<input type="hidden" id="qid-form" name="qid" value="{{qid}}">
+		{% endif %}
     	<div class="table-responsive">
 	   		<table  class='table table-bordered table-striped table-highlight'>
 	   		<tbody id="form-table">
 	   		{{ form }}
-
 	   		{% for option_id, option_value in options %}
 	   		<tr id='row-{{option_id}}'>
 	   			<th><input type="radio" name="correct_option" {% if expected_option_id == option_id %} checked="checked" {% endif %} value="{{option_id}}" required> <label for="id_draft_options_{{ forloop.counter }}">Option {{ forloop.counter }} </label></th>
@@ -54,18 +45,24 @@
 	  		</table>
 	  	</div>
 		<button id='addNewOptionButton' type="button" onclick="addNewOption()" class="btn btn-info">Add New Option</button>
-
         <button type="submit" class="save btn btn-primary">Save</button>
     </form>
     </div>
-
  </div>
 
 
-{% endblock content %}
-
-
 {% block javascript %}
+
+<script>
+//Script for form submission using AJAX
+$("#form_id").submit(function(e) {
+    e.preventDefault(); // avoid to execute the actual submit of the form.
+    var form = $(this);
+    var url = form.attr('action');
+    var data = form.serialize();
+    replace_content(url, {'form-save-request' : true},  data);
+});
+</script>
 
 <script>
 //The script containing the function to help with loading the Pagedown editor
@@ -79,19 +76,19 @@ var createEditor = function(el) {
         };
         var editor = new Markdown.Editor(converter, "", selectors);
         editor.run();
-    };
+};
 
 </script>
 <script>
 
 
 {% if options %}
-	var current_option_number =  {{ options|length }};	
+	var current_option_number = {{options|length}};	
 {% else %}
 	var current_option_number = 0;
 {% endif %}
 var options_table = document.getElementById("form-table");
-//get the html for the option
+//get the html for the options
 var option_html = `
 				  	<th><input type="radio" name="correct_option" value="{option_id}"> <label for="id_draft_options_{option_number}">Option {option_number}</label></th>
 				  	<td>
@@ -107,6 +104,7 @@ var option_html = `
 						</div>
 					</td>
 `
+
 function addNewOption() {
 	current_option_number += 1;
 	newOptionHTML = option_html;
@@ -120,20 +118,23 @@ function addNewOption() {
 	newTextArea = document.getElementById("id_draft_options_{option_number}".replace("{option_number}", current_option_number));
 
 	DjangoPagedown.createEditor(newTextArea);
-	
+	update_textarea_handlers();
 }
 </script>
 
 <script>
 //Handles focussed element
-$('textarea').focus(function () {
-	$('#' + this.id + '_wmd_preview').show();
-})
-$('textarea').blur(function () {
-	$('#' + this.id + '_wmd_preview').hide();
-})
+function update_textarea_handlers(){
+	$('textarea').focus(function () {
+		$('#' + this.id + '_wmd_preview').show();
+	})
+	$('textarea').blur(function () {
+		$('#' + this.id + '_wmd_preview').hide();
+	});
+}
 
-
-
+DjangoPagedown.init();
+update_textarea_handlers();
 </script>
 {% endblock javascript %}
+{% endblock content %}

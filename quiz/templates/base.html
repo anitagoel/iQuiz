@@ -1,70 +1,142 @@
 {% load markdown_deux_tags %}
+{% load static %}
+
 <!doctype html>
 <html>
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>iQuiz</title>
-	<!--uncomment following when live-->
-		 <!--<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-		 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">-->
-		 <!-- comment out following when live -->
-		 {% load static %}
-		 <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+	<!-- Font Awesome -->
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css">
+	<!-- Bootstrap core CSS -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/css/bootstrap.min.css" rel="stylesheet">
+	<!-- Material Design Bootstrap -->
+	<link href="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.7.3/css/mdb.min.css" rel="stylesheet">
+	<!---	<script type="text/javascript" async
+				src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+			</script> -->
 
-		 <link rel='stylesheet' href="{% static 'css/mystyle.css' %}" >
-		 {% block title %}<title>iQuiz</title>{% endblock title %}
-    <!---	<script type="text/javascript" async
-  src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
-</script> -->
+			<link rel='stylesheet' href="{% static 'css/manager_style.css' %}" >
+			{% block title %}<title>iQuiz</title>{% endblock title %}
 
-{% block head %} 
-{% endblock head %}
+			{% block head %}
+			{% endblock head %}
 
-</head>
+		</head>
 
-<body>
-	{% block header %}
-	{% endblock header %}
+		<body>
+			<nav class="navbar navbar-expand-lg navbar-dark primary-color">
+				<a class="navbar-brand" href="#">iQuiz</a>
+				<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#manager_nav"
+				aria-controls="manager_nav" aria-expanded="false" aria-label="Toggle navigation">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="manager_nav">
+				<ul class="navbar-nav mr-auto">
+					<li class="nav-item">
+						<li class="nav-item"><a href='home' class="nav-link">Home</a></li>
+						<li class="nav-item"><a onClick="replace_content('edit')" class="nav-link">Edit</a></li>
+						<li class="nav-item"><a onClick="replace_content('grades')" class="nav-link">View Grades</a></li>
+						<li class="nav-item"><a href="quiz-settings"  class="nav-link">Setttings</a></li>
+						<li class="nav-item"><a onClick="replace_content('publish')" class="nav-link">Publish</a></li>
 
-	{% block nav_bar %}
-	{% endblock nav_bar %}
-
-	<div class="container">
-		<div class="row">
-			<div class="col col-12 col-sm-10">
-				{% block content %}
-				{% endblock content %}
-			</div>
-			<div id="sidebar_right" class="col col-12 col-sm-2">
-				{% block sidebar_right %}
-				<div>
-					<a href="home"><button class="btn btn-info">Home</button></a>
-					<a href="edit"><button class="btn btn-info">Edit</button></a>
-					<a href="grades"><button class="btn btn-info">View Grades</button></a>
-					<a href="quiz-settings"><button class="btn btn-info">Setttings</button></a>
-					<a href="publish"><button class="btn btn-info">Publish</button></a>
+					</ul>
 				</div>
-				{% endblock sidebar_right %}
+			</nav>
+
+			<div id='loading-anim' style="display:none">
+				<div class='loading'></div>
+				<div class='loading'></div>
+				<div class='loading'></div>
 			</div>
-		</div>
-	</div>
-	{% block footer %}
-	<button onClick='gotoTopFunc()' id='gotoTop'></button> 
-	{% endblock footer %}
+			{% block header %}
+			<div id="top-message-container">
+			{% if message %}
+			{% if success %} 
+			<div id="top-message" class="alert alert-info  animated bounce">
+				{% else %} 
+				<div id="top-message" class="alert alert-warning animated bounce">
+					{% endif %}
+					{{ message|safe }}
+				</div>
+			{% endif %}
+			{% endblock header %}
+			</div>
+			
+		{% block container_div %}<div class="container">{% endblock container_div %}
+			<div class="row">
+				<div id="content" class="col col-12 col-sm-12 col-md-10">
+					{% block content %}
+					{% endblock content %}
+				</div>
+				<div id="sidebar_right_manager" class="col col-12 col-sm-12 col-md-2">
+					{% block sidebar_right %}
+					{% endblock sidebar_right %}
+				</div>
 
-	<!--Java Scripts-->
-	<script src="{% static 'js/jquery-1.11.1.min.js' %}"></script>
-	<script src="{% static 'js/bootstrap.min.js' %}"></script>
-	<script src="{% static 'js/scroll_control.js' %}"></script>
+			</div>
+			<!-- JQuery -->
+			<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+			<!-- Bootstrap tooltips -->
+			<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.4/umd/popper.min.js"></script>
+			<!-- Bootstrap core JavaScript -->
+			<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js"></script>
+			<!-- MDB core JavaScript -->
+			<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdbootstrap/4.7.3/js/mdb.min.js"></script>
 
-              <!-- <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-              crossorigin="anonymous"></script>
-              <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"> -->
+	  <!-- <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+	  crossorigin="anonymous"></script>
+	  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"> -->
 
+<script>
+	TOP_MESSAGE = $("#top-message");
+	TOP_MESSAGE_CONTAINER = $("#top-message-container");
+	var replace_content = function(url, data_extra, data_serialized) {
+		//Function to show the details of an attempt
+		//Assuming jQuery is loaded
+		data = '';
+		if (data_extra) data += '&' + $.param(data_extra);
+		if (data_serialized) data += '&' + data_serialized;
 
-  	{% block javascript %}
-  	{% endblock javascript %}
-	</body>
+		var div = $('#content');
+		div.html($('#loading-anim').html());
+		$.ajax({
+			type: "POST",
+			url: url,
+			data: data,
+			success: function(response) {
+				console.log(response);
+				res = response;
+				div.html(response.content);
+				window.history.pushState("object or string", "Title", "/student");
+				//Check if there is any message
+				message = response['message'];
+				if (message) {
+					// if there is any message
+					success = response['success'];
+					TOP_MESSAGE.attr('class', '').addClass('alert animated'); //remove all classes and add a few one!
+					if (success) TOP_MESSAGE.addClass('alert-success');
+					else TOP_MESSAGE.addClass('alert-warning');
+					TOP_MESSAGE.css('visibility', 'visible');
+					TOP_MESSAGE.html(message);
+					TOP_MESSAGE.addClass('jello');
+				}
+				
+				//Check if there is replace_content request
+				replace_content_url = response['replace_content'];
+				if (replace_content_url) {
+					replace_content('edit');
+				}
+			},
+			error: function(){
+			//Store the current serialized data for the form in the postponedRequest object
+			div.html("<h4 class='message'>Some error has occured connecting to server! Please try again...</h4>");
+		}
+	});
+	}
+</script>
+{% block javascript %}
+{% endblock javascript %}
+</body>
 </html>

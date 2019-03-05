@@ -1,4 +1,4 @@
-{% extends 'question.html' %}
+{% extends 'questions/question.html' %}
 {% load markdown_deux_tags %}
 
 
@@ -6,15 +6,16 @@
 {% if not correct_option_id %}
 	{% for option_id, option_value in options %}
 		<div class='field'>
-						<label class="mcq-option radio-inline">
-						<input  id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}'  required  {% if checked_option_id == option_id %}checked{% endif %}>{{ option_value | markdown }}
-						</label>
+			<label class="mcq-option radio-inline">
+			<input id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}'  required  {% if checked_option_id == option_id %}checked{% endif %}>
+			<span>{{ option_value | markdown }}</span>
+			</label>
 		</div>
 	{% endfor %}
 
 {% else %}
 		{% for option_id, option_value in options %}
-			<div class='field'>
+			<div class='field custom-control custom-switch'>
 				    <label class="responded-option radio-inline {% if checked_option_id == option_id %}
 							{% if option_id != correct_option_id %}incorrect-selection
 							{% else %} perfect
@@ -22,12 +23,10 @@
 				    {% else %}
 				    		{% if option_id == correct_option_id %}correct-option{% endif %}
 				   	{% endif %}">
-					<input  id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}' disabled  {% if checked_option_id == option_id %}checked{% endif %}>
-						{{ option_value | markdown }}
+					<input class='custom-control-input' id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}' disabled  {% if checked_option_id == option_id %}checked{% endif %}>
+						<span>{{ option_value | markdown }}</span>
 					</label>
 			</div>
 		{% endfor %}
 {% endif %}
 {% endblock options %}
-
-

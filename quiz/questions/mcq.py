@@ -3,16 +3,16 @@ import json
 import markdown_deux
 from django import forms
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 
 from django.template import loader
 from pagedown.widgets import PagedownWidget
 
-
 from quiz.utils import lti_utils as lti
 from ..models import Question
 
+CHECK_FORM_SAVE_REQUEST = "form-save-request"  # this helps in identifying that the POST request is saving form
 
 class MCQForm(forms.ModelForm):
     draft_statement = forms.CharField(widget=PagedownWidget(attrs={'placeholder': 'Question Statement', 'rows': 2}),
@@ -34,58 +34,61 @@ class MCQ:
     DRAFT_STATEMENT = "draft_statement"
     CORRECT_RESPONSE = "correct_option"
 
+
     @staticmethod
     def get_edit_view(request, question):
         """
-        The function returns the Manager view of the MCQ as a view.
+        The function returns JSON reponse with 'content' for the body with a form
+        which will be used to edit/add a new question.
         On success return to HttpResponseRedirect(reverse('edit')). 
         """
         question.question_type = MCQ.CLASS_NAME
-        template = 'questions/mcq-form.html'
+        template = loader.get_template('questions/mcq-form.html')
         message = None
-        # Validate that manager is viewing this page
+        # fill the variables from the POST if possible, else from the 
+        # question
         if question.draft_options_data and question.draft_options_data != '':
             options = json.loads(question.draft_options_data)
             expected_option_id = question.draft_expected_response
         else:
             options = [['option_1', ''], ['option_2', '']]
-            expected_option_id = []
+            expected_option_id = ''
 
-        if request.method == "POST":
-            form = MCQForm(request.POST, instance=question)
+        if request.method == "POST" and request.POST.get(CHECK_FORM_SAVE_REQUEST, False):
+            valid = True
+            form = MCQForm(data = request.POST, instance=question)
             options_list = request.POST.getlist(MCQ.DRAFT_OPTIONS)
-
+            # following if-block might not be required?
             if MCQ.DRAFT_OPTIONS not in request.POST or len(options_list) < 2:
                 message = "Add at least two options!"
-                return render(request, template,
-                              {'form': form, 'success': False, 'message': message, 'options': options,
-                               'expected_option_id': expected_option_id})
+                valid = False
+            expected_option_id = request.POST.get(MCQ.CORRECT_RESPONSE,False)
+            if not expected_option_id:
+                message="Please add a correct option"
+                valid = False
+            if valid:
+                # Store the option of the form as tuples (option_id, option_markdown)
+                option_tuples = []
+                for i in range(len(options_list)):
+                    option = options_list[i]
+                    option_tuples.append(("option_" + str(i + 1), option))
 
-            if MCQ.CORRECT_RESPONSE not in request.POST:
-                message = "Please select the correct response!"
-                return render(request, template,
-                              {'form': form, 'success': False, 'message': message, 'options': options,
-                               'expected_option_id': expected_option_id})
-            else:
-                expected_option_id = request.POST[MCQ.CORRECT_RESPONSE]
-
-            option_tuples = []  # Store the option as tuples of the form (option_id, option_markdown)
-            for i in range(len(options_list)):
-                option = options_list[i]
-                option_tuples.append(("option_" + str(i + 1), option))
-
-            if form.is_valid():
-                qs = form.save(commit=False)
-                qs.draft_expected_response = expected_option_id
-                qs.draft_options_data = json.dumps(option_tuples)
-                qs.save()
-                message = "The question is saved/updated successfully!"
-                return HttpResponseRedirect(reverse('edit'))
+                if form.is_valid():
+                    qs = form.save(commit=False)
+                    qs.draft_expected_response = expected_option_id
+                    qs.draft_options_data = json.dumps(option_tuples)
+                    qs.save()
+                    message = "The question is saved/updated successfully!"
+                    return JsonResponse({'replace_content': "edit", 'message' : message})
 
         else:
             form = MCQForm(instance=question)
-        return render(request, template, {'form': form, 'success': False, 'message': message, 'options': options,
-                                                 'expected_option_id': expected_option_id})
+        context = {'form': form, 'options': options,
+                               'expected_option_id': expected_option_id}
+
+        context['qid'] = question.pk if question.pk else False
+        content = template.render(context)
+        return JsonResponse({'content': content, 'success': False, 'message': message})
 
     @staticmethod
     def get_statement_html(question):

@@ -1,60 +1,70 @@
-{% extends 'base.html' %}
 {% load markdown_deux_tags %}
 {% load static %}
 
 {% block content %}
 
-{% if message %}
-{% if success %} <div class="alert alert-info fade in">
-{% else %} <div class="alert alert-warning fade in"> {% endif %}
-<a href="#" class="close" >&times;</a>
-{{ message|safe }}
-</div>
-{% endif %}
-
+<h2 align="center">Grades</h2>
 
 {% if not attempts %}
 <div class='message'>
-	<hr/>
-	<h4>No attempts found!</h4>
-	<br/>
-	<p>You will be shown the attempts details of the students here. Please visit this page again later!</p>
+    <hr/>
+    <h4>No attempts found!</h4>
+    <br/>
+    <p>You will be shown the attempts details of the students here. Please visit this page again later!</p>
 </div>
 {% else %}
 <div class='heading'>
-	<span>The attempts details are shown below. You can view the responses' details by clicking <bold>View Response</bold> button.</span>
+    <span>The attempts details are shown below. You can view the responses' details by clicking <bold>View Response</bold> button.</span>
+</div>
+<div id="grade_page_info">
+    <strong id='page_num'>Page Number : {{current_page_num}}</strong>
+    <strong id='per_page'>Max Attempts Per Page : {{per_page}}</strong>
+</div>
+
+<hr>
+<div id='total_page_buttons' style="padding:10px; margin:5px;">
+    {% for page_num in total_pages_num_list %}
+    <button class="buttons-page-num" onClick="replace_content('grades', {page_num:{{page_num}} })">{{forloop.counter}}
+    </button>
+    {% endfor %}
 </div>
 <div class="table-responsive">
-	<table class='table table-bordered table-striped table-highlight'>
-		<thead>
-			<tr>
-				<td>S.No.</td>
-				<td>Student</td>
-				<td>Attempt Submission Time</td>
-				<td>Duration of Attempt</td>
-				<td>Grades</td>
-				<td>View Response</td>
-				{% if download_allowed %}
-				<td>Download PDF</td>
-				{% endif %}
-			</tr>
-		</thead>
-		<tbody>
-			{% for attempt in attempts %}
-			<tr>
-				<td>{{forloop.counter}}</td>
-				<td>{{attempt.student}}</td>
-				<td>{{attempt.submission_time}}</td>
-				<td>{{attempt.duration}}</td>
-				<td>{{attempt.grade}}</td>
-				<td><button onClick='show_attempt({{attempt.id}})' class='btn btn-info'>View Response</button></td>
-				{% if view_download_allowed %}
-				<td><button onClick='download_attempt({{attempt.id}})' class='btn btn-info'>Download Response</button></td>
-				{% endif %}
-			</tr>
-			{% endfor %}
-		</tbody>
-	</table>
+    <table class='table table-bordered table-striped table-highlight'>
+        <thead>
+        <tr>
+            <td>S.No.</td>
+            <td>Student</td>
+            <td>View Response</td>
+            {% if download_allowed %}
+            <td>Download PDF</td>
+            {% endif %}
+            <td>Attempt Submission Time</td>
+            <td>Duration of Attempt</td>
+            <td>Grades</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for attempt in attempts %}
+        <tr>
+            <td>{{forloop.counter}}</td>
+            <td>{{attempt.student}}</td>
+            <td>
+                <button onClick='show_attempt({{attempt.id}})' class='btn btn-info'>View Response</button>
+            </td>
+            {% if view_download_allowed %}
+            <td>
+                <button onClick='download_attempt({{attempt.id}})' class='btn btn-info'>Download Response</button>
+            </td>
+            {% endif %}
+            <td>{{attempt.submission_time}}</td>
+            <td>{{attempt.duration}}</td>
+            <td>{{attempt.grade}}</td>
+
+
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endif %}
 
@@ -67,14 +77,16 @@
 
 {% block javascript %}
 <script type="text/javascript">
+	current_page_num = {{current_page_num}};
+
 	var show_attempt = function(attempt_id) {
         //Function to show the details of an attempt
         //Assuming jQuery is loaded
-        data  = {attempt_id : attempt_id };
+        data  = {full_attempt_details_id : attempt_id };
         var div = $('#response-view');
         $.ajax({
         	type: "POST",
-        	url: "attempt_details",
+        	url: "grades",
         	data: data,
         	success: function(response) {
         		div.html(response.content);
@@ -85,6 +97,6 @@
         }
     });
     }
-</script>
 
+</script>
 {% endblock %}

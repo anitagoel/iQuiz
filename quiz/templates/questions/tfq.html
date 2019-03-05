@@ -1,8 +1,8 @@
-{% extends 'question.html' %}
+{% extends 'questions/question.html' %}
 {% load markdown_deux_tags %}
 
 {% block statement %}
-	<h3>{{top_h3}}</h3>
+	<h5>{{top_h3}}</h5>
 	<hr/>
 	{{ statement | safe}}
 {% endblock statement %}
@@ -14,7 +14,7 @@
 					{% if checked_option_id == option_id %}
 						<label class="mcq-option radio-inline"><input  id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}' checked required>{{ option_value | markdown }}</label>
 					{% else %}
-					<label class="mcq-option radio-inline"><input  id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}' required>{{ option_value | markdown }}</label>
+					<label class="mcq-option radio-inline"><input  id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}' required><span>{{ option_value | markdown }}</span></label>
 					{% endif %}
 			</div>
 		{% endfor %}
@@ -29,7 +29,7 @@
 				    		{% if option_id == correct_option_id %}correct-option{% endif %}
 				   	{% endif %}">
 					<input  id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}' disabled  {% if checked_option_id == option_id %}checked{% endif %}>
-						{{ option_value | markdown }}
+						<span>{{ option_value | markdown }}</span>
 					</label>
 			</div>
 		{% endfor %}

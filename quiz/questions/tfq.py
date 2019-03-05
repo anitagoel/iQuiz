@@ -3,7 +3,7 @@ from django.shortcuts import render
 from ..models import Question
 
 from django.template import loader
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 
 from pagedown.widgets import PagedownWidget
@@ -11,7 +11,7 @@ from pagedown.widgets import PagedownWidget
 from .question import AbstractQuestion
 import markdown_deux
 
-
+CHECK_FORM_SAVE_REQUEST = "form-save-request"  # this helps in identifying that the POST request is saving form
 class TFQForm(forms.ModelForm):
     draft_statement = forms.CharField(
         widget=PagedownWidget(
@@ -44,36 +44,31 @@ class TFQ(AbstractQuestion):
         The function returns the Manager view of the TFQ as a view.
         """
         question.question_type = TFQ.CLASS_NAME
+        template = loader.get_template('questions/tfq-form.html')
         message = "Please make sure form is valid!"
+        success = False
         correct_option_id = 'true'  # choose true by default
-
-        if request.method == "POST":
+        valid = True
+        if request.method == "POST" and request.POST.get(CHECK_FORM_SAVE_REQUEST, False):
             form = TFQForm(request.POST, instance=question)
             if TFQ.CORRECT_RESPONSE not in request.POST:
                 message = "Please select the correct response!"
-                return render(
-                    request,
-                    'questions/tfq-form.html',
-                    dict(form=form, success=False, message=message,
-                         correct_option_id=correct_option_id, top_h3=TFQ.top_h3)
-                )
+                valid = False
             else:
                 correct_option_id = request.POST[TFQ.CORRECT_RESPONSE]
-            if form.is_valid():
+            if valid and form.is_valid():
                 qs = form.save(commit=False)
                 qs.draft_expected_response = correct_option_id
                 qs.save()
                 message = "The question is saved/updated successfully!"
-                return HttpResponseRedirect(reverse('edit'))
-
+                return JsonResponse({'replace_content': "edit", 'message' : message})
         else:
             form = TFQForm(instance=question)
-        return render(
-            request,
-            'questions/tfq-form.html',
-            dict(form=form, success=False, message=message,
-                 correct_option_id=correct_option_id, top_h3=TFQ.top_h3)
-        )
+
+        context = dict(form=form, correct_option_id=correct_option_id)
+        context['qid'] = question.pk if question.pk else False
+        content = template.render(context)
+        return JsonResponse({'content': content, 'message': message, 'success':success})
 
     @staticmethod
     def get_statement_html(question):

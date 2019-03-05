@@ -4,13 +4,6 @@
 
 {% block content %}
     <div>
-    {% if message %}
-        {% if success %} <div class="alert alert-info fade in">
-        {% else %} <div class="alert alert-warning fade in"> {% endif %}
-            <a href="#" class="close" >&times;</a>
-            {{ message|safe }}
-            </div>
-    {% else %}
         <p><h2>Some error has occurred!</h2>
         <br/>
         <h4>It might be because your session is invalid or you tried to refresh the IFrame.
@@ -18,6 +11,5 @@
             If the issue persists, please contact the admin. <br/> If you are the admin, then check the error logs.
         </h4>
         </p>
-    {% endif %}
     </div>
 {% endblock content %}

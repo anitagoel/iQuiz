@@ -1,12 +1,3 @@
-#sidebar_right {
-	padding-top:20px;
-}
-.btn {
-	min-width: 100px;
-	margin:5px;
-	padding:5px;
-	display:inline-block;
-}
 
 /*GO TO TOP Button*/
 #gotoTop{
@@ -21,27 +12,39 @@
 	transform: rotate(-135deg);
 	-webkit-transform: rotate(-135deg);
 	z-index:99;
-	}
-	
+}
+
 
 #gotoTop:hover {
 	border-color: Crimson ;
 	border-width: 0 5px 5px 0;
 	padding:5px;
 }
-	
+
 .addQuestionButtons {
-    padding: 10px;
-    margin:10px;
+	padding: 10px;
+	margin:10px;
 }
 
 .tfq-option {
-    border: 2px solid #e5e5e5;
-    border-radius: 5px;
-    width: 100%;
-    padding-left: 4rem;
-    padding-bottom: 1em;
-    margin-bottom: 10px !important;
+	border: 2px solid #e5e5e5;
+	border-radius: 5px;
+	width: 100%;
+	padding-left: 4rem;
+	padding-bottom: 1em;
+	margin-bottom: 10px !important;
 }
 
 
+
+.buttons-page-num {
+	padding:5px;
+	min-width: 15px;
+}
+
+
+#managers_button_modal_button {
+  height:100%;
+  position:fixed;
+  width:20px;
+}

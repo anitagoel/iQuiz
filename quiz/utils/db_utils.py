@@ -1,7 +1,7 @@
 from django.db.models import Sum
 
 from quiz.utils import lti_utils as lti
-from quiz.models import Quiz, LTIUser, QuizSettings, Question, Response
+from quiz.models import Quiz, LTIUser, QuizSettings, Question, Response, QuizManager
 
 
 def get_quiz(request):
@@ -149,7 +149,7 @@ def get_students_responses(request):
     Returns the last response of all students in the quiz
     """
     quiz = get_quiz(request)
-    responses = Response.objects.filter(quiz = quiz, submitted = True).order_by('-start_time')
+    responses = Response.objects.filter(quiz=quiz, submitted=True).order_by('-start_time')
     return responses
 
 
@@ -167,3 +167,11 @@ def get_quiz_total_marks(quiz):
     questions = get_published_questions(quiz)
     total = questions.aggregate(Sum('question_weight'))['question_weight__sum']
     return total
+
+
+def get_managers(quiz):
+    """
+    Returns the query set managers of the given quiz
+    """
+    managers = QuizManager.objects.filter(quiz=quiz)
+    return managers

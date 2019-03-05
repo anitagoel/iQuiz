@@ -1,29 +1,20 @@
-{% extends 'base.html' %}
 {% load markdown_deux_tags %}
 {% load static %}
 
 {% block content %}
-
-	{% if message %}
-		{% if success %} <div class="alert alert-info fade in">
-		{% else %} <div class="alert alert-warning fade in"> {% endif %}
-    		<a href="#" class="close" >&times;</a>
-    		{{ message|safe }}
-			</div>
-	{% endif %}
 	{% if not questionsHTML %}
 	<div id="heading">
 		<hr/>
 		<h2>Publish</h2>
 		<hr/>
 		<p>
-		If you are done with creating the quiz, click Publish button on this page. This will make the quiz accessible to your students. You might also be required to click Publish button on the Studio for this Unit to put make the quiz live.
+		If you are done with creating the quiz, click Publish button on this page. This will make the quiz accessible to your students. You might also be required to click Publish button on the Studio for this Unit to put make the quiz live.</p>
 		<br/>
 		<hr/>
 		<h4>Please note that you will not be able to edit the questions of the quiz if any students attempts the quiz! So make
 		sure that you are done with the quiz before publishing!</h4>
 		<div style="width:100%; align-items: center; text-align: center;">
-		<a href="publish?confirm_publish=1"><button style="width:200px" class="btn btn-primary btn-lg">Publish</button></a>
+		<a onClick="replace_content('publish', {confirm_publish:1})"><button style="width:200px" class="btn btn-primary btn-lg">Publish</button></a>
 		</div>
 
 		<h2>Delete Quiz</h2>
@@ -37,13 +28,33 @@
 		<li>All the associated <strong>Response</strong> of the students.</li>
 		</ul></p>
 
-		<h4>Please be super sure before doing this! <br/>
+		<h4>Please be super sure before doing this!<br>
 		Basically, this will make it like a new Quiz just initialized! <strong>Everything will be wiped out!</strong></h4>
 		<div style="width:100%; align-items: center; text-align: center;">
 
 		<button id= 'information_modal_button' style="width:200px" type="button" class="btn btn-danger btn-lg" data-toggle="modal" data-target="#delete_quiz">Delete Quiz</button>
 		</div>
+	</div>
 
+	<div id="delete_quiz" class="modal fade" role="dialog" aria-labelledby="delete_quiz-label" >
+        <div class="modal-dialog  modal-lg">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title w-100" id="information-label"  class="modal-title">Delete Quiz</h4>
+                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                <h5>If you are sure you want to delete the quiz, then click the following button. <br/> </h5>
+				<a onClick="replace_content('publish', {confirm_delete:1})"><button style="width:200px" class="btn btn-warning btn-lg">Delete Quiz</button></a>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+        </div>
+    </div>
 
      <div id="delete_quiz" class="modal fade" role="dialog">
         <div class="modal-dialog  modal-sm">
@@ -53,8 +64,7 @@
                 <h3 class="modal-title">Delete Quiz</h3>
               </div>
               <div class="modal-body">
-                <h4>If you are sure you want to delete the quiz, then click the following button. <br/> </h4>
-				<a href="publish?confirm_delete=1"><button style="width:200px" class="btn btn-warning btn-lg">Delete Quiz</button></a>
+                
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
@@ -62,8 +72,7 @@
             </div>
         </div>
     </div>
-
-		</p>
+	</p>
 	</div>
 	{% endif %}
 	<hr/>

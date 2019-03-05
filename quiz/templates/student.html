@@ -2,44 +2,42 @@
 {% load markdown_deux_tags %}
 {% load static %}
 
-{% block content %}
-    {% if message %}
-        {% if success %} 
-            <div class="alert alert-info fade in">
-        {% else %} 
-            <div class="alert alert-warning fade in">
-        {% endif %}
-            <a href="#" class="close" >&times;</a>
-            {{ message|safe }}
-            </div>
-    {% endif %}
 
+        {% block head_ext %}
+            <link rel='stylesheet' href="{% static 'css/loading.css' %}" >
+        {% endblock head_ext %}
+
+
+{% block content %}
     {% if quizname %}
         <div class="heading quizname">
         <h1>{{quizname}}</h1>
         </div>
     {% endif %}
-    <hr/>
+    
     <div class="top-bar">
-        <button id='general_instructions_button' type="button" class="btn btn-info" data-toggle="modal" data-target="#general-instructions">General Instructions</button>
+        <button id='general_instructions_button' type="button" class="btn btn-primary" data-toggle="modal" data-target="#general-instructions">General Instructions</button>
         {% if information %}
          <button id= 'information_modal_button' type="button" class="btn btn-info" data-toggle="modal" data-target="#information">Information</button>
         {% endif %}
     </div>
 
-    <div id="general-instructions" class="modal fade" role="dialog">
-        <div class="modal-dialog  modal-lg">
+    <div class="modal fade" id="general-instructions" tabindex="-1" role="dialog" aria-labelledby="general-instructions-label"
+      aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
               <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h3 class="modal-title">General Instructions</h3>
+                <h4 class="modal-title w-100" id="general-instructions-label" >General Instructions</h4>
+                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
               </div>
               <div class="modal-body">
                 <ol>
-                    <li><h5>Please note that there might be limited number of attempts, so be careful before starting the quiz attempt.</h5></li>
-                    <li><h5>If the quiz is timed, then make sure you have good internet connectivity before you start. The start time is saved at the server when you start the attempt, even if you close the browser, your attempt will be counted after time-up.</h5></li>
+                    <li><p>Please note that there might be limited number of attempts, so be careful before starting the quiz attempt.</p></li>
+                    <li><p>If the quiz is timed, then make sure you have good internet connectivity before you start. The start time is saved at the server when you start the attempt, even if you close the browser, your attempt will be counted after time-up.</p></li>
                     <li>
-                        <h5>There is a question palette shown on the quiz, it gives you a summary of your responses as explained below:<br/> </h5>
+                        <p>There is a question palette shown on the quiz, it gives you a summary of your responses as explained below:<br/> </p>
                         <div id='palette-buttons-grid-summary-instructions' class="table-responsive">
                         <table class="table table-bordered table-striped table-highlight">
                             <tbody>
@@ -47,31 +45,31 @@
                             <td>
                             <button id='button-number-answered' class='question-button  btn-success answered'>x</button></td>
                             <td>
-                            <h5><b>Answered </b>represent the number of questions that are answered and saved.</h5></td>
+                            <p><b>Answered </b>represent the number of questions that are answered and saved.</p></td>
                             </tr>
                             <tr class='palette-button-instructions'>
                             <td>
                             <button id='button-number-unvisited' class='question-button btn-dark unvisited'>x</button></td>
                             <td>
-                            <h5><b>Unvisited </b>represent the number of questions that are not viewed.</h5></td>
+                            <p><b>Unvisited </b>represent the number of questions that are not viewed.</p></td>
                             </tr>
                             <tr class='palette-button-instructions'>
                             <td><button id='button-number-not-answered' class='question-button btn-danger not-answered'>x</button></td>
                             <td>
-                            <h5><b>Not Answered </b>represent the number of questions that are <b>NOT </b>answered.</h5></td>
+                            <p><b>Not Answered </b>represent the number of questions that are <b>NOT </b>answered.</p></td>
                             </tr>
                             <tr class='palette-button-instructions'>
                             <td>
                             <button id='button-number-marked' class='question-button btn-info marked'>x</button></td>
-                            <td><h5>
+                            <td><p>
                             <b>Marked For Review </b>represent the number of questions that are answered and marked for review. <em> Note:</em> The questions which are answered and Marked For Review will be considered for evaluation of the marks.
-                            </td></h5> 
+                            </p> </td>
                             </tr>
                             </tbody>
                         </table>
                         </div>
                     </li>
-                    <li><h5>On clicking the buttons on summary palette, the questions from corresponding category will be highlighted on the question palette.</h5>
+                    <li><p>On clicking the buttons on summary palette, the questions from corresponding category will be highlighted on the question palette.</p>
                     </li>
                 </ol>
               </div>
@@ -82,12 +80,14 @@
         </div>
     </div>
     {% if information %}
-     <div id="information" class="modal fade" role="dialog">
+     <div id="information" class="modal fade" role="dialog" aria-labelledby="information-label" >
         <div class="modal-dialog  modal-lg">
             <div class="modal-content">
               <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h3 class="modal-title">Information</h3>
+                <h4 class="modal-title w-100" id="information-label"  class="modal-title">Information</h4>
+                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
               </div>
               <div class="modal-body">
                 {{information | markdown}}
@@ -101,23 +101,35 @@
     {% endif %}
 
     <hr/>
+    <div class="quiz-info">
+        <ul>
+            {% if duration %}
+            <li><p>The duration of this quiz is <strong>{{duration}}</strong>.</p></li>
+            {% else %}
+            <li><p>There is <strong>NO</strong> time limit on this quiz. </p></li>
+            {% endif %}
+            {% if max_attempt %}
+                <li><p>The maximum number of allowed attempt for this quiz is <strong>{{max_attempt}}</strong></p></li>
+            {% else %}
+                <li><p>There is <strong>NO</strong> limit on the number of attempts. Note that only your latest attempt responses are saved in the database in this case. <strong>If you again attempt the quiz, your last attempt is lost!</strong>.
+                </p></li>
+            {% endif %}
+            <li><p>There are total <strong>{{total_questions_number}} </strong> questions in the quiz.</p></li>
+        </ul>
+    </div>
+    <br/>
     <div class="student_home_buttons">
         {% if not quiz_not_allowed %}
-            {% if not attempts %}
-               <div id='div-enter-button' class='student_home_item' ><button onClick='confirm_attempt()' class="btn btn-primary btn-lg">Attempt Quiz</button></div>
-            {% else %}
-                <div id='div-enter-button' class='student_home_item' ><button onClick='confirm_attempt()'  class="btn btn-primary btn-lg">Attempt Quiz Again</button></div>
-            {% endif %}
+
+               <div id='div-enter-button' class='student_home_item' ><button onClick='confirm_attempt()' class="btn btn-default btn-lg">{% if not attempts %}Attempt Quiz{% else %}Attempt Quiz Again{% endif %}</button></div>
 
         {% endif %}
 	</div>
 
-
-    <hr/>
     <div id='student-grades-div' class='student-grades-div'>
         {% if not attempts %}
-            <div class='message'>
-            <h5>You have not attempted the quiz yet! Please attempt the quiz and return!</h5>
+            <div class='message text-center'>
+            <h4>You have not attempted the quiz yet! Please attempt the quiz and return!</h4>
             </div>
         {% else %}
             <div class='heading'>
@@ -128,10 +140,10 @@
                     <thead>
                         <tr>
                             <td>S.No.</td>
+                            <td>View Response</td>
                             <td>Attempt Submission Time</td>
                             <td>Duration of Attempt</td>
                             <td>Grades</td>
-                            <td>View Response</td>
                             {% if download_allowed %}
                             <td>Download PDF</td>
                             {% endif %}
@@ -141,10 +153,10 @@
                         {% for attempt in attempts %}
                             <tr>
                                 <td>{{forloop.counter}}</td>
+                                <td><button onClick='show_attempt({{attempt.id}})' class='btn btn-info'>View Response</button></td>
                                 <td>{{attempt.submission_time}}</td>
                                 <td>{{attempt.duration}}</td>
                                 <td>{{attempt.grade}}</td>
-                                <td><button onClick='show_attempt({{attempt.id}})' class='btn btn-info'>View Response</button></td>
                                 {% if view_download_allowed %}
                                 <td><button onClick='download_attempt({{attempt.id}})' class='btn btn-info'>Download Response</button></td>
                                 {% endif %}
@@ -154,11 +166,17 @@
                 </table>
             </div>
         {% endif %}
-
-        <hr/>
-
-        <div id='response-view'>
-        
+        <br/>
+        <div name="response-view" id="response-view-container" style="display:none">
+            
+            <a class='anchor'><h3 align="center">Response Report</h3></a>
+            <div id='response-view'>
+                <div id='response-loading'>
+                    <div class='loading'></div>
+                    <div class='loading'></div>
+                    <div class='loading'></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -176,7 +194,8 @@ var confirm_attempt = function() {
         href = '/quiz';
         message = 'You are being redirected to the quiz. Please wait...';
         time = 2000;
-        redirectHandler(href, message, time);
+        //redirectHandler(href, message, time);
+        replace_content('quiz');
     }
 };
 
@@ -211,6 +230,8 @@ var redirectHandler = function (href, message, time){
 
 <script type="text/javascript">
     var show_attempt = function(attempt_id) {
+        $('#response-view-container').show();
+        window.location.href = "#" + "response-view";
         //Function to show the details of an attempt
         //Assuming jQuery is loaded
         data  = {attempt_id : attempt_id };
@@ -220,12 +241,12 @@ var redirectHandler = function (href, message, time){
         url: "attempt_details",
         data: data,
         success: function(response) {
-            console.log(response);
+            $('#response-loading').show();
             div.html(response.content);
         },
         error: function(){
             //Store the current serialized data for the form in the postponedRequest object
-            div.innerHTML = "<h5 class='message'>Some error has occurred connecting to server! Please try again...</h5>";
+            div.innerHTML = "<p class='message'>Some error has occurred connecting to server! Please try again...</p>";
         }
         });
     }

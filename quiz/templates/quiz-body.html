@@ -1,4 +1,4 @@
-{% extends 'student_base.html' %}
+
 {% load markdown_deux_tags %}
 {% load static %}
 
@@ -219,7 +219,7 @@ var answered_question_ids = [];
     if (!timerStartedInterval){
     //If timer is not started for some reason, then start now!
     if (time_left)
-    	var timerStartedInterval = setInterval(timer_update, 1000);
+        var timerStartedInterval = setInterval(timer_update, 1000);
     }
     </script>
     {% endblock javascript %}
