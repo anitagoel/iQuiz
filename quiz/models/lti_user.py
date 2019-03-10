@@ -4,6 +4,7 @@ class LTIUser(models.Model):
     """
     The class is used to store the data about the user_id, name, and email.
     """
+    consumer_key = models.CharField(max_length=100, help_text='Used to store LTI consumer key')
     userId = models.CharField(max_length=200, help_text="User ID as in the LTI Launch Request")
     name = models.CharField(null=True, max_length = 100, blank=True, help_text="Name of the user if available/given.")
     email = models.CharField(null=True, max_length=100, blank=True, help_text="Email of the student if provided")

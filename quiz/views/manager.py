@@ -47,27 +47,34 @@ def home(request):
         return render(request, "manager.html", {'message': message})
 
     # Show the questions of the quiz
-    # TODO: show student view complete
-    questions = db.get_questions_by_quiz(quiz)
-    questionsHTML = ''
-    count = 0
+    quiz_settings = db.get_quiz_settings(quiz)
+    information = quiz_settings.information
+    questions = db.get_published_questions(quiz)  # returns QuerySet of the published questions
+    total_questions_number = questions.count()
+    max_attempts = quiz_settings.maxAttempts
+    duration = quiz_settings.duration
+
+    questions_html = list()
     for question in questions:
-        question_type = QUESTION_TYPE[question.question_type]  # get the class for the question
-        statement = question_type.get_statement_html(question)
-        if statement != '':
-            count+=1
-            question_format = "<tr><td>{count}</td><td><h4> {statement} </h4></td> </tr>"  # TODO: Don't use HTML here, put it in template
-            questionsHTML += question_format.format(count=count, statement=statement)
+        question_type = QUESTION_TYPE[question.question_type]
+        html = question_type.get_student_view_html(question)  # Add the HTML form field input for the question
+        questions_html.append((question.id, html))
 
     message = 'Please click edit button to start editing the quiz!!!'
-
+    time_left = 0
     return render(
         request,
         "manager.html",
         {
-            'questionsHTML': questionsHTML,
+            'questions_html': questions_html,
+            'information': information,
             'success': True,
-            'message': message
+            'message': message,
+            'time_left': time_left,
+            'information': information,
+            'max_attempts' : max_attempts,
+            'total_questions_number' : total_questions_number,
+            'duration' : duration,
         }
     )
 

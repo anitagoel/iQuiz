@@ -316,11 +316,9 @@ def attempt_details(request):
             dict(content='<h4>Invalid Attempt ID, try again or please contact admin for resolution of the error.</h4>')
         )
 
-    # If the user is manager, make sure that the manager is indeed manager of the associated user id.
+    # TODO: If the user is manager, make sure that the manager is indeed manager of the associated user id.
     if lti.is_manager(request):
         full_response_allowed = True    # manager always sees the full response
-
-
 
     if not full_response_allowed:
         # Return the summary for the response

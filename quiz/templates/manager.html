@@ -4,7 +4,7 @@
 
 {% block content %}
 
-	{% if not questionsHTML %}
+	{% if not questions_html %}
 	<div id="heading">
 		<hr/>
 		<h2>Welcome to iQuiz!</h2>
@@ -12,26 +12,82 @@
 		<p> You can start adding/updating questions to your quiz by clicking on the <strong>Edit</strong> button.<br/>
 		You should also make sure that you set the 
 		settings for the quiz correctly before hitting <strong>Publish</strong>!<br/>
-		After you are done with creating the quiz, click <strong>Publish</strong> button on this page. This will make the quiz accessible to your students. <br/>
+		After you are done with creating the quiz, goto <strong>Publish</strong> page.
 		<br/>
-		You might also be required to click <strong>Publish</strong> button on the Studio (LTI Consumer) for this Unit to make the quiz live and running!
+		<strong>Note</strong>You might also be required to click <strong>Publish</strong> button on the Studio (LTI Consumer) for this Unit to make the quiz live and running!
 		<hr/>
-		<p><strong></strong>Please note that you will not be able to edit the questions of the quiz if any students attempts the quiz! So make
-		sure that you are done with the quiz before publishing.</strong></p>
+		<p>Please note that you will not be able to edit the questions of the quiz if any students attempts the quiz! So make
+		sure that you are done with the quiz before publishing it!</p>
 		</p>
 	</div>
 	{% endif %}
+	
 	<hr/>
-	{% if questionsHTML %}
-	<div class = "questions" style="display:inline-block; width:100%;">
-		<div width = "100%" class="table-responsive">
-	   		<table  class='table table-bordered table-striped table-highlight'>
-	   			<tbody>
-				{{ questionsHTML |safe }}
-				</tbody>
-			</table>
-		</div>
-	</div>
+	{% if questions_html %}
+
+  <div class="quiz-info">
+  <h3 text-align='center'>Quiz Settings</h3>
+        <ul>
+            {% if duration %}
+            <li><p>The duration of this quiz is <strong>{{duration}}</strong>.</p></li>
+            {% else %}
+            <li><p>There is <strong>NO</strong> time limit on this quiz. </p></li>
+            {% endif %}
+            {% if max_attempts %}
+                <li><p>The maximum number of allowed attempt for this quiz is <strong>{{max_attempt}}</strong></p></li>
+            {% else %}
+                <li><p>There is <strong>NO</strong> limit on the number of attempts. Note that only the latest attempt's responses are saved in the database in this particular case. <strong>If the quiz is again attempted by the student, then the last attempt's record is overriden!</strong>.
+                </p></li>
+            {% endif %}
+            <li><p>There are total <strong>{{total_questions_number}} </strong> questions in this quiz.</p></li>
+        </ul>
+    </div>
+  <br>
+	<h3 text-align="center">Live Quiz</h3>
+	<hr>
+    <div class="text-center" align="center">
+        {% if information %}
+        <button id='information_modal_button' type="button" class="btn btn-default" data-toggle="modal" data-target="#information">Information
+        </button>
+        {% endif %}
+    </div>
+
+    {% for qid, question in questions_html %}
+    <div id='div-question-{{qid}}' class='question'>
+        <form id='form-question-{{qid}}' class="form-horizontal" method="POST" class="post-form">
+            {{question|safe}}
+        </form>
+        <hr/>
+    </div>
+    {% endfor %}
+
+    <div id="div-submit" class="submit-button" >
+        <button id="submit-button-inside" class="btn btn-primary disabled" onClick='submit()' disabled='true'>Submit</button>
+    </div>
+
+
+    {% if information %}
+     <div id="information" class="modal fade left" role="dialog" aria-labelledby="information-label" >
+        <div class="modal-dialog  modal-full-height modal-left">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h4 class="modal-title w-100" id="information-label"  class="modal-title">Information</h4>
+                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+                </button>
+              </div>
+              <div class="modal-body">
+                {{information | markdown}}
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+              </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
 	{% endif %}
 {% endblock content %}
 

@@ -11,6 +11,7 @@ from pagedown.widgets import PagedownWidget
 
 from quiz.utils import lti_utils as lti
 from ..models import Question
+from .question import AbstractQuestion
 
 CHECK_FORM_SAVE_REQUEST = "form-save-request"  # this helps in identifying that the POST request is saving form
 
@@ -23,7 +24,7 @@ class MCQForm(forms.ModelForm):
         fields = ['question_weight', 'draft_statement']
 
 
-class MCQ:
+class MCQ(AbstractQuestion):
     """
     The class is to implement the Multiple Choice type Question.
     """

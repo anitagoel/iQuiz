@@ -18,6 +18,9 @@
 			</script> -->
 
 			<link rel='stylesheet' href="{% static 'css/manager_style.css' %}" >
+			<link rel='stylesheet' href="{% static 'css/loading.css' %}" >
+			<link rel='stylesheet' href="{% static 'css/student.css' %}" >
+
 			{% block title %}<title>iQuiz</title>{% endblock title %}
 
 			{% block head %}
@@ -35,20 +38,21 @@
 			<div class="collapse navbar-collapse" id="manager_nav">
 				<ul class="navbar-nav mr-auto">
 					<li class="nav-item">
-						<li class="nav-item"><a href='home' class="nav-link">Home</a></li>
-						<li class="nav-item"><a onClick="replace_content('edit')" class="nav-link">Edit</a></li>
-						<li class="nav-item"><a onClick="replace_content('grades')" class="nav-link">View Grades</a></li>
-						<li class="nav-item"><a href="quiz-settings"  class="nav-link">Setttings</a></li>
-						<li class="nav-item"><a onClick="replace_content('publish')" class="nav-link">Publish</a></li>
+						<li data-toggle="collapse" data-target='#manager_nav' class="nav-item"><a href='home' class="nav-link">Home</a></li>
+						<li data-toggle="collapse" data-target='#manager_nav'  class="nav-item"><a onClick="replace_content('edit')" class="nav-link">Edit</a></li>
+						<li data-toggle="collapse" data-target='#manager_nav'  class="nav-item"><a onClick="replace_content('grades')" class="nav-link">View Grades</a></li>
+						<li data-toggle="collapse" data-target='#manager_nav' class="nav-item"><a href="quiz-settings"  class="nav-link">Setttings</a></li>
+						<li data-toggle="collapse" data-target='#manager_nav' class="nav-item"><a onClick="replace_content('publish')" class="nav-link">Publish</a></li>
 
 					</ul>
 				</div>
 			</nav>
-
 			<div id='loading-anim' style="display:none">
+			<div class='loading-full' >
 				<div class='loading'></div>
 				<div class='loading'></div>
 				<div class='loading'></div>
+			</div>
 			</div>
 			{% block header %}
 			<div id="top-message-container">

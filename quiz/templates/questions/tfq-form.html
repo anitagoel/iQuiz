@@ -61,19 +61,9 @@ $("#form_id").submit(function(e) {
     var data = form.serialize();
     replace_content(url, {'form-save-request' : true},  data);
 });
-</script>
 
-
-
-<script>
-//Handles focussed element
-$('textarea').focus(function () {
-	$('#' + this.id + '_wmd_preview').show();
-})
-$('textarea').blur(function () {
-	$('#' + this.id + '_wmd_preview').hide();
-});
-
+$('textarea').addClass('expand');
+$('.wmd-preview').addClass(show-preview);
 DjangoPagedown.init();
 </script>
 {% endblock javascript %}

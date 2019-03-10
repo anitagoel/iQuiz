@@ -9,4 +9,4 @@ class QuizSettingsForm(ModelForm):
 
     class Meta:
         model = QuizSettings
-        fields = ['deadline', 'duration', 'timeBetweenAttempt', 'maxAttempts', 'graded' , 'information']
+        fields = ['deadline', 'duration', 'timeBetweenAttempt', 'maxAttempts' , 'information']

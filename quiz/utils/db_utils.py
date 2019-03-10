@@ -10,16 +10,16 @@ def get_quiz(request):
     does, then a new quiz is to be created which would be copy of the latest non archived version of the quiz with given resourceLinkId 
     return new quiz.
     """
-    live_quiz = Quiz.objects.filter(resourceLinkId = lti.get_resource_link_id(request), contextId = lti.get_context_id(request))
+    live_quiz = Quiz.objects.filter(consumer_key = lti.get_oauth_consumer_key(request), resourceLinkId = lti.get_resource_link_id(request), contextId = lti.get_context_id(request))
     if live_quiz.exists():
         return live_quiz.latest()
 
     # The resourceLinkId and the contextId pair doesn't exists, check whether the resourceLinkId exists.
-    if Quiz.objects.filter(resourceLinkId = lti.get_resource_link_id(request)).exists():
+    if Quiz.objects.filter(consumer_key = lti.get_oauth_consumer_key(request), resourceLinkId = lti.get_resource_link_id(request)).exists():
         # The quiz link is being migrated to another Context (new course term), hence the non-archived
         # latest quiz with same resourceLinkId has to be copied over as a new Quiz.
         quiz = create_new_quiz(request)
-        latest_quiz = Quiz.objects.filter(resourceLinkId = lti.get_resource_link_id(request)).latest()
+        latest_quiz = Quiz.objects.filter(consumer_key = lti.get_oauth_consumer_key(request), resourceLinkId = lti.get_resource_link_id(request)).latest()
         # copy all the settings of the latest quiz associated with the RESOURCE LINK ID.
         quiz_settings = QuizSettings.objects.get(quiz = quiz)
         quiz_settings.duration = latest_quiz.duration
@@ -27,7 +27,21 @@ def get_quiz(request):
         quiz_settings.maxAttempts = latest_quiz.maxAttempts
         quiz_settings.graded = latest_quiz.graded
         quiz_settings.save()
-        # TODO: Copy all the questions?
+        #TODO: Copy all the questions , doing it manually to avoid any useless trouble: is it the right way?
+        questions = get_questions_by_quiz(latest_quiz)
+        for question in questions:
+            new_question = Question()
+            new_question.quiz = question.quiz      # change the quiz to the new quiz
+            new_question.question_type = question.question_type
+            new_question.serial_number = question.serial_number
+            new_question.question_weight = question.question_weight 
+            new_question.statement = question.statement
+            new_question.options_data = question.options_data
+            new_question.expected_response = question.expected_response
+            new_question.other_data = question.other_data
+            new_question.published = question.published
+            new_question.save()
+
         return quiz
 
     # The quiz doesn't exists for associated request! Return False
@@ -40,6 +54,7 @@ def create_new_quiz(request):
     """
     quiz = Quiz() #New Quiz is created
     quiz.resourceLinkId = lti.get_resource_link_id(request)
+    quiz.consumer_key = lti.get_oauth_consumer_key(request)
     quiz.contextId = lti.get_context_id(request)
     quiz.save() #Save the Quiz
     quizSettings = QuizSettings(quiz = quiz)
@@ -55,10 +70,11 @@ def get_user(request):
     userId = lti.get_user_id(request)
     if not userId:
         return False
-    ltiUserList = LTIUser.objects.filter(userId = userId)
+    ltiUserList = LTIUser.objects.filter(consumer_key = lti.get_oauth_consumer_key(request),  userId = userId)
     if ltiUserList.count() == 0:
         ltiUser = LTIUser()
         ltiUser.userId = lti.get_user_id(request)
+        ltiUser.consumer_key = lti.get_oauth_consumer_key(request)
         ltiUser.name = lti.get_user_name(request)
         ltiUser.email = lti.get_user_email(request)
         ltiUser.role = lti.get_user_role(request)

@@ -14,17 +14,18 @@
 </div>
 {% else %}
 <div class='heading'>
-    <span>The attempts details are shown below. You can view the responses' details by clicking <bold>View Response</bold> button.</span>
+    <span>The attempts details are shown below. You can view the full responses' details by clicking <strong>View Response</strong> button.</span>
 </div>
+<br>
 <div id="grade_page_info">
-    <strong id='page_num'>Page Number : {{current_page_num}}</strong>
-    <strong id='per_page'>Max Attempts Per Page : {{per_page}}</strong>
+    <h5 id='page_num'>Page Number : <strong>{{current_page_num}}</strong></h5>
+    <h5 id='per_page'>Max Attempts Per Page : <strong>{{per_page}}</strong></h5>
 </div>
 
 <hr>
 <div id='total_page_buttons' style="padding:10px; margin:5px;">
     {% for page_num in total_pages_num_list %}
-    <button class="buttons-page-num" onClick="replace_content('grades', {page_num:{{page_num}} })">{{forloop.counter}}
+    <button class="btn btn-primary buttons-page-num" style="min-width: 30px; max-width: 50px;" onClick="replace_content('grades', {page_num:{{page_num}} })">{{forloop.counter}}
     </button>
     {% endfor %}
 </div>
@@ -69,33 +70,46 @@
 {% endif %}
 
 <hr/>
-<div id='response-view'>
 
+<div name="response-view" id="response-view-container" style="display:none">
+            
+            <a class='anchor'><h3 align="center">Response Report</h3></a>
+             <div id='response-loading' style='display:none;'>
+                    <div class='loading'></div>
+                    <div class='loading'></div>
+                    <div class='loading'></div>
+            </div>
+            <div id='response-view'>
+            </div>
 </div>
 
 {% endblock content %}
 
 {% block javascript %}
 <script type="text/javascript">
-	current_page_num = {{current_page_num}};
-
-	var show_attempt = function(attempt_id) {
+	    current_page_num = {{current_page_num}};
+        var show_attempt = function(attempt_id) {
+        $('#response-view-container').show();
+        window.location.href = "#" + "response-view";
+        $('#response-loading').show();
         //Function to show the details of an attempt
         //Assuming jQuery is loaded
-        data  = {full_attempt_details_id : attempt_id };
+        data  = {attempt_id : attempt_id };
         var div = $('#response-view');
+        div.html('');
         $.ajax({
-        	type: "POST",
-        	url: "grades",
-        	data: data,
-        	success: function(response) {
-        		div.html(response.content);
-        	},
-        	error: function(){
-            //Store the current serialized data for the form in the postponedRequest object
-            div.innerHTML = "<h4 class='message'>Some error has occured connecting to server! Please try again...</h4>";
+        type: "POST",
+        url: "attempt_details",
+        data: data,
+        success: function(response) {
+            $('#response-loading').hide();
+            div.html(response.content);
+        },
+        error: function(){
+            setTimeout (function() { show_attempt(attempt_id); }, 5000); //retry after 5 seconds
+            div.innerHTML = "<p class='message'>Some error has occurred connecting to server! Trying again...</p>";
         }
-    });
+        });
     }
 
 </script>

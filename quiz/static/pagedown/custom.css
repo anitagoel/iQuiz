@@ -41,9 +41,10 @@ body
     transition: all .5s ;
 }
 
-.wmd-input:focus {
+.wmd-input.expand {
 	height:150px;
 }
+
 .option .wmdi-input
 {
     height: 100px;
@@ -150,4 +151,9 @@ body
 	font-family: trebuchet MS, helvetica, sans-serif;
 	font-size: 0.8em;
 	font-weight: bold;
+}
+
+
+.show-preview {
+	display: block;
 }

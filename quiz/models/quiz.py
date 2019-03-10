@@ -11,6 +11,7 @@ class Quiz(models.Model):
     The Quiz Model is used to store the basic information about the quiz.
     The Primary Key (auto generated) will be used as Quiz Id.
     """
+    consumer_key = models.CharField(max_length=100, help_text='Used to store LTI consumer key')
     resourceLinkId = models.CharField(max_length=100, help_text = "Resource_link_id")
     contextId = models.CharField(
         max_length=200,
@@ -72,7 +73,7 @@ class QuizSettings(models.Model):
         help_text="Set the maximum number of allowed attempts. Leave blank for unlimited attempts."
     )
     graded = models.BooleanField(
-        default = False,
+        default = True,
         verbose_name="Graded",
         help_text="Set whether the quiz is graded"
     )
