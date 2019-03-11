@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 """
 
 import os
+from .iQuiz_settings import *   # import the LTI_OAUTH_CREDENTIALS
+
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -134,12 +136,6 @@ X_FRAME_OPTIONS = 'ALLOWALL' #For LTI ?
 SESSION_COOKIE_SAMESITE = None #For LTI? ###Try adding a middleware which will send the user id with each request and each redirect to maintain the user's session
 CSRF_USE_SESSIONS = True #For LTI? 
 
-
-LTI_OAUTH_CREDENTIALS ={
-    'hit': {
-        'secret': 'greatSecret'
-    }
-}
 
 ##Pagedown markdown editor settings
 #PAGEDOWN_WIDGET_CSS = ('pagedown/demo/browser/demo.css', "pagedown/custom.css",)
