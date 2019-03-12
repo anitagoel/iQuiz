@@ -1,4 +1,6 @@
 
+var current_section_start_time = null;   //used by sending time spent on a question to server
+
 function initialize_quiz() { 
 	jumpToQuestion(question_ids[current_question_index]); //Jump to the first question
 	answered_question_ids.forEach(function(qid, index) {
@@ -25,6 +27,7 @@ function force_submit(){
 	setTimeout(function() {
 		redirectHandler('/student', 'You are being redirected to homepage...', 1000);
 	}, 30000); //definitely redirect to homepage after 30 seconds.
+
 	message = 'The quiz is being submitted... <br/>Please wait!'
 	redirectHandler('#', message, null);
 	sendPostponedRequests(); //send postponed requests.
@@ -149,6 +152,7 @@ function saveResponseAjax(request){
 	question_id = request[0];
 	data = request[1];
 	success = false;
+
 	$.ajax({
     type: "POST",
     url: "quiz/save_response",
@@ -179,6 +183,7 @@ function saveResponseAjax(request){
 
 var sendingPostponedRequests = false; //Used to see if sendPostponedRequests function is already called or not.
 
+// TODO: Combine all the postponed requests into ONE single request for better response time
 function sendPostponedRequests(){
 	if (!sendingPostponedRequests){
 		sendingPostponedRequests = true;
@@ -210,7 +215,9 @@ function pollServerConnection() {
     });
 }
 
-function jumpToQuestion(qid){
+
+function switchQuestionView(qid){
+
 	index = question_ids.indexOf(qid);
 	if (index == -1) return;
 	//Update the slider for navigation
@@ -224,22 +231,74 @@ function jumpToQuestion(qid){
 
 	if (!(getButtonState(qid) == "answered" || getButtonState(qid) == "marked")) changeButtonState(qid, "not-answered");
 	updateAnswerNumberButtons ();
+}
 
 
-/** //TODO: Add this part for collecting data for analytics
+function send_time_spent_details(qid){
+	current_question_id = question_ids[current_question_index];
+
+
+	//TODO: Check this part.
+
 	if (current_section_start_time == null){
 		current_section_start_time = Date.now();
+		return;
 	}
 	else{
+
 		//Send the difference between current time and current_section_start_time to serve for the given question_id
-		diff = Date.now() - current_section_start_time;
-		question_id = question_ids[last_question_id_index];
-		request = [question_id, {viewing_time: diff}]; 
+		diff = (Date.now() - current_section_start_time)/1000;  	// in seconds
+		question_id_with_tag = current_question_id + "_time_spent" ;  // We add the _time_spent so there is no overriding of the postponed requests by these requests.
+		earlier_request = postponedRequest[question_id_with_tag];
+		if (earlier_request){
+			earlier_request[viewing-time-duration] += diff;   //add the duration of time if the request is postponed.
+			return;
+		}
+
+		if (diff<1){
+			return; // Ignore if less than 1 second TODO: Was it right thing to do? Should we create a dictionary to store the time locally and send when its beyond a fixed time?
+		}
+		request = [question_id_with_tag, {"viewing-time-qid": current_question_id, "viewing-time-duration": diff}]; 
 		saveResponseAjax(request);
 		//Now change the current_section_start_time to now!
 		current_section_start_time = Date.now();
 	}
-**/
+}
+
+
+function send_time_spent_details_ajax(request) {
+	question_id = request[0];
+	data = request[1];
+	success = false;
+	$.ajax({
+    type: "POST",
+    url: "quiz/save_time_spent",
+    data: data,
+    success: function(response) {
+     	if ('error' in response){
+     		redirectHandler('/student', 'Some error has occurred! Please report this to admin.', 5000);
+     	}
+    },
+    error: function(){
+    	setTimeout(function() { send_time_spent_details(request); }, 5000); // retry after 5 seconds
+    	pollServerConnection(); //Keep polling the server until successful
+    }
+    });
+	return success;
+
+}
+
+
+// the array contains the function which are called when jumpToQuestion is called. Note that switchQuestionView modifies
+// the current_question_id, hence it is called at last (might be used by previous functions)
+
+jumpToQuestionFunctions = [send_time_spent_details, switchQuestionView];  
+
+function jumpToQuestion(qid){
+	//Call each function from jumpToQuestionFunctions array with qid.
+	for (index in jumpToQuestionFunctions){
+		jumpToQuestionFunctions[index](qid);
+	}
 }
 
 

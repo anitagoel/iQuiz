@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from pylti.common import post_message, generate_request_xml
 
 from quiz.utils.decorators import *
-from ..models import Question, Response, OutcomeServiceData
+from ..models import Question, Response, OutcomeServiceData, Answer
 from ..questions import QUESTION_TYPE
 
 CONSUMERS = settings.LTI_OAUTH_CREDENTIALS
@@ -159,6 +159,7 @@ def show_quiz(request):
 def save_response(request):
     # To save the response from ajax request
     attempt = db.get_previous_attempt(request)
+
     if not attempt:
         message = "Your attempt has either expired or isn't valid!"
         return JsonResponse(
@@ -190,8 +191,21 @@ def save_response(request):
     quiz = db.get_quiz(request)
     questions_id = db.get_published_questions_id(quiz)  # get the question ids for the quiz
 
+    # check if the request has a viewing-time-qid and the time in the POST
+    qid_viewing_time = request.POST.get("viewing-time-qid", False)
+    time_duration = request.POST.get("viewing-time-duration", False)
+    if qid_viewing_time and time_duration:
+        qid_viewing_time = int(qid_viewing_time)
+        time_duration = int(float(time_duration))     # get time duration in seconds
+        question = Question.objects.get(pk = qid_viewing_time)      # get the question with id qid_viewing_time
+        Answer.add_time_spent(attempt, question, time_duration)
+        return JsonResponse({'success':'true'})
+
     for qid_string in request.POST:
         # check that the student can only access the question of the quiz they are answering
+        # TODO: Check the response request.POST[qid_string] is valid! It seems like a
+        # security flaw that the data from the POST is directly saved in the database
+        # without any sanity check at all!
         if qid_string.isdigit() and int(qid_string) in questions_id:
             attempt.add_or_update_response(qid_string, request.POST[qid_string])
 
