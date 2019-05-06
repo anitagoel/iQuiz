@@ -19,7 +19,9 @@
         <button id='general_instructions_button' type="button" class="btn btn-primary" data-toggle="modal" data-target="#general-instructions">General Instructions</button>
         {% if information %}
          <button id= 'information_modal_button' type="button" class="btn btn-info" data-toggle="modal" data-target="#information">Information</button>
+  
         {% endif %}
+        <button onclick="location='/analytics_page';" id='analytics_button' type="button" class="btn btn-primary">Analytics</button>
     </div>
 
     <div class="modal fade" id="general-instructions" tabindex="-1" role="dialog" aria-labelledby="general-instructions-label"
@@ -104,12 +106,12 @@
     <div class="quiz-info">
         <ul>
             {% if duration %}
-            <li><p>The duration of this quiz is <strong>{{duration}}</strong>.</p></li>
+            <li><p>The duration of this quiz is <strong> {{duration}}</strong> minutes.</p></li>
             {% else %}
             <li><p>There is <strong>NO</strong> time limit on this quiz. </p></li>
             {% endif %}
             {% if max_attempts %}
-                <li><p>The maximum number of allowed attempt for this quiz is <strong>{{max_attempt}}</strong></p></li>
+                <li><p>The maximum number of allowed attempt for this quiz is <strong>{{max_attempt}}</strong>.</p></li>
             {% else %}
                 <li><p>There is <strong>NO</strong> limit on the number of attempts. Note that only your latest attempt responses are saved in the database in this case. <strong>If you again attempt the quiz, your last attempt is lost!</strong>.
                 </p></li>
@@ -141,6 +143,7 @@
                         <tr>
                             <td>S.No.</td>
                             <td>View Response</td>
+                            <td>View Analytics</td>
                             <td>Attempt Submission Time</td>
                             <td>Duration of Attempt</td>
                             <td>Grades</td>
@@ -154,6 +157,7 @@
                             <tr>
                                 <td>{{forloop.counter}}</td>
                                 <td><button onClick='show_attempt({{attempt.id}})' class='btn btn-info'>View Response</button></td>
+                                <td><button onClick='show_analytics({{attempt.id}})' class='btn btn-info'>View Analytics</button></td>
                                 <td>{{attempt.submission_time}}</td>
                                 <td>{{attempt.duration}}</td>
                                 <td>{{attempt.grade}}</td>
@@ -169,7 +173,8 @@
         <br/>
         <div name="response-view" id="response-view-container" style="display:none">
             
-            <a class='anchor'><h3 align="center">Response Report</h3></a>
+            <a class='anchor'><h3 id="response-view-title" align="center">Response Report</h3></a>
+            <hr>
             <div id='response-view'>
                 <div id='response-loading'>
                     <div class='loading'></div>
@@ -178,13 +183,14 @@
                 </div>
             </div>
         </div>
+
+
     </div>
 
 {% endblock content %}
 
 
 {% block javascript %}
-
 <script>
 //$('#div-enter-button').click(confirm_attempt);
 
@@ -202,7 +208,7 @@ var confirm_attempt = function() {
 </script>
 
 <script>
-//Handles the redirection by showing a modal like div with given message
+//Handles the redirection by showing a div (like a modal)with given message
 var redirectHandler = function (href, message, time){
     //check if already redirect div is there
     message = message || '';
@@ -228,8 +234,14 @@ var redirectHandler = function (href, message, time){
 }
 </script>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
 <script type="text/javascript">
+
+var response_view_title = $('#response-view-title');
+
     var show_attempt = function(attempt_id) {
+        response_view_title.html("Response Report");
         $('#response-view-container').show();
         window.location.href = "#" + "response-view";
         //Function to show the details of an attempt
@@ -250,5 +262,29 @@ var redirectHandler = function (href, message, time){
         }
         });
     }
+
+    var show_analytics = function(attempt_id) {
+        response_view_title.html("Analytics");
+        $('#response-view-container').show();
+        window.location.href = "#" + "analytics";
+        //Function to show the details of an attempt
+        //Assuming jQuery is loaded
+        data  = {attempt_id : attempt_id };
+        var div = $('#response-view');
+        $.ajax({
+        type: "POST",
+        url: "attempt_analytics",
+        data: data,
+        success: function(response) {
+            $('#response-loading').show();
+            div.html(response.content);
+        },
+        error: function(){
+            //Store the current serialized data for the form in the postponedRequest object
+            div.innerHTML = "<p class='message'>Some error has occurred connecting to server! Please try again...</p>";
+        }
+        });
+    }
 </script>
+
 {% endblock javascript %}

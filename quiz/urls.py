@@ -19,6 +19,7 @@ urlpatterns = [
         path('student', views.student.home, name="student_home"),
         path('quiz', views.student.show_quiz, name="quiz"),
         path('quiz/save_response', views.student.save_response, name="save_response"),
-        path('attempt_details', views.student.attempt_details, name="attempt_details"), 
-
+        path('attempt_details', views.student.attempt_details, name="attempt_details"),
+        path('attempt_analytics', views.student.attempt_analytics, name="attempt_analytics"),
+        path('analytics_page', views.student.analytics_page, name="analytics_page"),
         ]

@@ -46,3 +46,13 @@ class Answer (models.Model):
         # TODO: Yet to be implemented.
         pass
 
+    @staticmethod
+    def get_time_spent(response, question):
+        try:
+            answer = Answer.objects.get(response=response, question=question)
+            return answer.time_spent
+        except:
+            return 0
+
+
+

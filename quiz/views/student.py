@@ -367,7 +367,7 @@ def get_attempts_detail(request):
     return attempts
 
 
-def get_attempts_details_and_paper(quiz, response_object):
+def get_attempts_details_and_paper(quiz, response_object, get_time_spent=False):
     """
     Function to return the dictionary with FULL attempts details for the user (Student).
     """
@@ -383,14 +383,33 @@ def get_attempts_details_and_paper(quiz, response_object):
     attempt['total_grade_percent'] = str(attempt['total_grade'] * 100) + "%"
 
     # now we shall form the responded question paper
+
     questions_html = list()
     questions = db.get_published_questions(quiz)
     response_data = response_object.get_response()
+    time_spent = list()
+    question_marks = list()
+    question_statements = list()
+
     for question in questions:
         question_type = QUESTION_TYPE[question.question_type]
         response = extract_response(response_data, question.id)
         html = question_type.get_student_responded_paper_view_html(question, response)
         questions_html.append((question.id, html))
+        question_statements.append(question_type.get_statement_html(question))
+
+        if get_time_spent:
+            time_spent.append(Answer.get_time_spent(response_object, question))
+            if (response is None):
+                # if the question is not attempted, add None to the question_marks list
+                question_marks.append("null")
+                continue
+            # if the question HAD a response, add its marks
+            marks = question_type.get_marks(question, response)
+            question_marks.append(marks)
+
+    if get_time_spent:
+        return attempt, questions_html,question_statements, time_spent, question_marks
     return attempt, questions_html
 
 
@@ -462,3 +481,74 @@ def handle_previous_attempt(request):
             return render(request, 'student.html', {'success': False,
                                                     'message': 'Your last quiz attempt was not submitted properly! It is timed out!<br/>Please view your grades.'})
     return False
+
+
+@csrf_exempt
+@validate_user
+def attempt_analytics(request):
+    #TODO: Add checks if viewing analytics is allowed or not like attempt_details
+    quiz = db.get_quiz(request)
+    user = db.get_user(request)
+    quiz_settings = db.get_quiz_settings(quiz)
+    if not (request.POST and 'attempt_id' in request.POST):
+        return JsonResponse({'content': '<h4>Invalid Request</h4>'})
+    attempt_id = request.POST['attempt_id']
+    try:
+        response = Response.objects.get(id=attempt_id)
+    except:
+        pass
+    if not response or (lti.is_student(request) and response.user != user):
+        return JsonResponse(
+            dict(content='<h4>Invalid Attempt ID, try again or please contact admin for resolution of the error.</h4>')
+        )
+
+    # Return the full details of the response
+    attempt_details_full, question_paper, question_statements, time_spent,question_marks = get_attempts_details_and_paper(quiz, response, True)
+
+    template = loader.get_template('attempt_analytics_ajax.html')
+    content = template.render({
+        'attempt_details': attempt_details_full, 
+        'question_paper': question_paper, 
+        'time_spent': time_spent, 
+        'question_marks':question_marks, 
+        'question_statements':question_statements
+        }
+    )
+    
+    return JsonResponse({'content': content})
+
+
+@csrf_exempt
+@validate_user
+def analytics_page(request):
+    #TODO: Add checks if viewing analytics is allowed or not like attempt_details
+    quiz = db.get_quiz(request)
+    user = db.get_user(request)
+    quiz_settings = db.get_quiz_settings(quiz)
+    if not (request.POST and 'attempt_id' in request.POST):
+        return JsonResponse({'content': '<h4>Invalid Request</h4>'})
+    attempt_id = request.POST['attempt_id']
+    try:
+        response = Response.objects.get(id=attempt_id)
+    except:
+        pass
+    if not response or (lti.is_student(request) and response.user != user):
+        return JsonResponse(
+            dict(content='<h4>Invalid Attempt ID, try again or please contact admin for resolution of the error.</h4>')
+        )
+
+    # Return the full details of the response
+    attempt_details_full, question_paper, question_statements, time_spent,question_marks = get_attempts_details_and_paper(quiz, response, True)
+
+    template = loader.get_template('analytics_page.html')
+    content = template.render({
+        'attempt_details': attempt_details_full, 
+        'question_paper': question_paper, 
+        'time_spent': time_spent, 
+        'question_marks':question_marks, 
+        'question_statements':question_statements
+        }
+    )
+    
+    return HttpResponse(content)
+

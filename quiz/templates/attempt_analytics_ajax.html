@@ -1,0 +1,232 @@
+{% load markdown_deux_tags %}
+{% load static %}
+<script>
+//loader for css files
+if (!$('head #analytics_css')[0])
+	$('head').append(`<link id="attempt_analytics_css" rel="stylesheet" type="text/css" href="{% static 'css/analytics.css' %}">`);
+if (!$('head #responded-question-paper-css')[0])
+	$('head').append(`<link id="responded-question-paper-css" rel="stylesheet" type="text/css" href="{% static 'css/responded-question-paper.css' %}">`);
+</script>
+{% block content %}
+    {% if message %}
+        {% if success %} <div class="alert alert-info fade in">
+        {% else %} <div class="alert alert-warning fade in"> {% endif %}
+            <a href="#" class="close" >&times;</a>
+            {{ message|safe }}
+            </div>
+    {% endif %}
+
+	<br>
+	<div class="text-center">
+		<h4>Answers Summary</h4>
+			<div id="doughnut-chart" class="doughnut-chart">
+				<canvas id="doughnut-chart-canvas"></canvas>
+			</div>
+	</div>
+
+	<br>
+	<div class="row text-center bordered">
+		<div class="col">
+			<div class="card text-center">
+			  <div class="card-header navbar-dark">
+			    <h5>Minimum Time Spent</h5>
+			  </div>
+			  <div class="card-body">
+			    <h5 id="min-time" class="card-title"></h5>
+			  </div>
+			</div>
+		</div>
+		<div class="col">
+			<div class="card text-center">
+			  <div class="card-header">
+			    <h5>Maximum Time Spent</h5>
+			  </div>
+			  <div class="card-body">
+			    <h5 id="max-time" class="card-title"></h5>
+			  </div>
+			</div>
+		</div>
+		<div class="col">
+			<div class="card text-center">
+			  <div class="card-header">
+			    <h5>Average Time Spent</h5>
+			  </div>
+			  <div class="card-body">
+			    <h5 id="avg-time" class="card-title"></h5>
+			  </div>
+			</div>
+		</div>
+	</div>
+	<br>
+	<hr>
+
+	<div id="questions-bar-chart">
+	<h5>Bar chart shows the time spent on each question. You can click on the bars to view the questions. 
+		You can analyse how much time you spent on each question. Green bars are the questions which are correctly
+		answered, pink ones are for incorrect, and the grey bars denote unattempted questions.</h5>
+	<br>
+	<canvas id="bar-canvas" class="chartjs" width="undefined" height="undefined"></canvas>
+	</div>
+	<hr>
+    <div id="questions">
+        {% for qid, question_html in question_paper %}
+          <div class="questions" id="qid-{{qid}}">
+			  <span style="display:inline-block">{{forloop.counter}}</span>
+              {{question_html|safe}}
+          </div>
+        {% endfor %}
+    </div>
+    <br>
+    <br>
+    <hr>
+
+{% endblock content %}
+<script type="text/javascript">
+
+function strip(html)
+{
+   var tmp = document.createElement("DIV");
+   tmp.innerHTML = html;
+   return tmp.textContent || tmp.innerText || "";
+}
+
+</script>
+<script>
+
+var qids = [];
+var questions_htmls = [];
+var question_statements = [];
+var time_spent = [];
+var question_marks = [];
+var last_clicked_qid = "null";
+
+{% for qid, question_html in question_paper %}
+          qids.push(`{{qid}}`);
+{% endfor %}
+{% for time in time_spent %}
+	time_spent.push({{time}});
+{% endfor %}
+
+$('#min-time').html(Math.min(...time_spent));
+
+$('#max-time').html(Math.max(...time_spent));
+var total_time = 0;
+for (i=0; i<time_spent.length; i++){
+	total_time += time_spent[i];
+}
+$('#avg-time').html(total_time/time_spent.length);
+
+//time_spent_clone = time_spent.slice();
+
+
+{% for marks in question_marks %}
+	question_marks.push({{marks}});
+{% endfor %}
+
+{% for stmt in question_statements %}
+	question_statements.push(`{{stmt|safe}}`);
+{% endfor %}
+
+
+var doughnut_chart_canvas = document.getElementById("doughnut-chart-canvas");
+var doughnut_chart_ctx = doughnut_chart_canvas.getContext("2d");
+var color = [
+    'lightgreen',    // color for data at index 0
+    'pink',   // color for data at index 1
+    'grey',  // color for data at index 2
+	];
+
+var data = {
+    datasets: [{
+        data: [{{attempt_details.correct}}, {{attempt_details.incorrect}}, {{attempt_details.unanswered}}]
+    }],
+
+    // These labels appear in the legend and in the tooltips when hovering different arcs
+    labels: [
+        'Correct',
+        'Incorrect',
+        'Unanswered',
+    ],
+    backgroundColor:color
+};
+
+
+
+options = {};
+var doughnut_chart = new Chart(doughnut_chart_ctx, {
+	type:"doughnut",
+	data:{
+		labels:["Correct","Incorrect","Unanswered"],
+		datasets:[
+			{
+				data:[{{attempt_details.correct}},{{attempt_details.incorrect}},{{attempt_details.unanswered}}],
+				backgroundColor:["lightgreen","pink","grey"]
+			}
+			]
+		}
+	}
+	);
+var bar_chart_ctx = document.getElementById("bar-canvas").getContext("2d");
+
+var bar_chart  =  new Chart(bar_chart_ctx,
+	{
+		type:"bar",
+		data:
+			{
+				labels: qids,
+				datasets:[
+					{label: ["Total time spent on each question in seconds"],
+						data: time_spent,
+						fill:false,
+						backgroundColor: function(context) 
+							{ 
+								marks = question_marks[context.dataIndex];
+								if (marks == "null"){
+									return "grey";
+								}
+								if (marks > 0){
+									return "lightgreen";
+								}
+								return "pink";
+							},
+
+						borderColor:["rgb(255, 99, 132)","rgb(255, 159, 64)"],
+						borderWidth:1
+					}
+				]
+			},
+		options:
+			{
+			onClick: function(context, bar) {
+				if (bar==null) return;
+				var index = bar[0]._index;
+				var id="#qid-" + qids[index];
+				$(last_clicked_qid).hide();
+				$(id).show();
+				last_clicked_qid = id;
+			},
+			scales:
+				{
+					yAxes: [
+					{
+						ticks:
+							{
+								beginAtZero:true
+							}
+					}
+					]
+				},
+			tooltips: {
+       			 callbacks: {
+            			label: function(tooltipItem) {
+                			return "Question: " + $.trim(strip(question_statements[tooltipItem.index]));
+            			}
+        			}
+    			}
+			}
+	}
+	);
+
+</script>
+
+

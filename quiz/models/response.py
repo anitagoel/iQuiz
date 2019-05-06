@@ -35,7 +35,7 @@ class Response(models.Model):
         if qid in response:
             return response[qid]
         else:
-            return False
+            return None
 
     def clear_response(self, qid):
         """

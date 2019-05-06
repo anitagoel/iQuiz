@@ -28,12 +28,12 @@ question_types[{{qid}}] = '{{question_type}}';
 question_ids.push({{qid}});
 {% endfor %}
 
-
 {% if answered_question_ids %}
 var answered_question_ids = {{answered_question_ids}};
 {% else %}
 var answered_question_ids = [];
 {% endif %}
+
 </script>
 {% endblock head_ext %}
 

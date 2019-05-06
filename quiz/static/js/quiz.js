@@ -27,7 +27,8 @@ function force_submit(){
 	setTimeout(function() {
 		redirectHandler('/student', 'You are being redirected to homepage...', 1000);
 	}, 30000); //definitely redirect to homepage after 30 seconds.
-
+	send_time_spent_details(1);
+	
 	message = 'The quiz is being submitted... <br/>Please wait!'
 	redirectHandler('#', message, null);
 	sendPostponedRequests(); //send postponed requests.
@@ -236,7 +237,6 @@ function switchQuestionView(qid){
 
 function send_time_spent_details(qid){
 	current_question_id = question_ids[current_question_index];
-
 
 	//TODO: Check this part.
 
