@@ -88,7 +88,7 @@
     <div id="questions-first">
         {% for qid, question_html in question_paper_first %}
           <div class="questions" id="qid-first-{{qid}}">
-              <h3>Last Attempt</h3>
+              <small>Last Attempt</small>
               {{question_html|safe}}
           </div>
         {% endfor %}
@@ -96,7 +96,7 @@
     <div id="questions-second">
         {% for qid, question_html in question_paper_second %}
           <div class="questions" id="qid-second-{{qid}}">
-          <h3>Second Last Attempt</h3>
+          <small>Second Last Attempt</small>
               {{question_html|safe}}
           </div>
         {% endfor %}
@@ -125,6 +125,8 @@ function strip(html)
 <script>
 
 var qids = [];
+qnumber = [];
+num = 1;
 var questions_htmls_first = [];
 var question_statements = [];
 var time_spent_first = [];
@@ -143,6 +145,8 @@ var last_clicked_qid = "null";
 //////////////////For the First attempt //////////////////////
 {% for qid, question_html in question_paper_first %}
           qids.push(`{{qid}}`);
+          qnumber.push(num);
+          num = num+1;
 {% endfor %}
 
 {% for time in time_spent_first %}
@@ -262,12 +266,13 @@ var doughnut_chart = new Chart(doughnut_chart_ctx, {
 
 var bar_chart_ctx = document.getElementById("bar-canvas").getContext("2d");
 var x;
+
 var bar_chart  =  new Chart(bar_chart_ctx,
     {
         type:"bar",
         data:
             {
-                labels: qids,
+                labels: qnumber,
                 datasets:[
                     {label: "Last Attempt",
                         data: time_spent_first,

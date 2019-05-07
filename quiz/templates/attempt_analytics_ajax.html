@@ -8,13 +8,13 @@ if (!$('head #responded-question-paper-css')[0])
 	$('head').append(`<link id="responded-question-paper-css" rel="stylesheet" type="text/css" href="{% static 'css/responded-question-paper.css' %}">`);
 </script>
 {% block content %}
-    {% if message %}
-        {% if success %} <div class="alert alert-info fade in">
-        {% else %} <div class="alert alert-warning fade in"> {% endif %}
-            <a href="#" class="close" >&times;</a>
-            {{ message|safe }}
-            </div>
-    {% endif %}
+	{% if message %}
+		{% if success %} <div class="alert alert-info fade in">
+		{% else %} <div class="alert alert-warning fade in"> {% endif %}
+			<a href="#" class="close" >&times;</a>
+			{{ message|safe }}
+		</div>
+	{% endif %}
 
 	<br>
 	<div class="text-center">
@@ -29,30 +29,30 @@ if (!$('head #responded-question-paper-css')[0])
 		<div class="col">
 			<div class="card text-center">
 			  <div class="card-header navbar-dark">
-			    <h5>Minimum Time Spent</h5>
+				<h5>Minimum Time Spent</h5>
 			  </div>
 			  <div class="card-body">
-			    <h5 id="min-time" class="card-title"></h5>
+				<h5 id="min-time" class="card-title"></h5>
 			  </div>
 			</div>
 		</div>
 		<div class="col">
 			<div class="card text-center">
 			  <div class="card-header">
-			    <h5>Maximum Time Spent</h5>
+				<h5>Maximum Time Spent</h5>
 			  </div>
 			  <div class="card-body">
-			    <h5 id="max-time" class="card-title"></h5>
+				<h5 id="max-time" class="card-title"></h5>
 			  </div>
 			</div>
 		</div>
 		<div class="col">
 			<div class="card text-center">
 			  <div class="card-header">
-			    <h5>Average Time Spent</h5>
+				<h5>Average Time Spent</h5>
 			  </div>
 			  <div class="card-body">
-			    <h5 id="avg-time" class="card-title"></h5>
+				<h5 id="avg-time" class="card-title"></h5>
 			  </div>
 			</div>
 		</div>
@@ -68,17 +68,17 @@ if (!$('head #responded-question-paper-css')[0])
 	<canvas id="bar-canvas" class="chartjs" width="undefined" height="undefined"></canvas>
 	</div>
 	<hr>
-    <div id="questions">
-        {% for qid, question_html in question_paper %}
-          <div class="questions" id="qid-{{qid}}">
+	<div id="questions">
+		{% for qid, question_html in question_paper %}
+		  <div class="questions" id="qid-{{qid}}">
 			  <span style="display:inline-block">{{forloop.counter}}</span>
-              {{question_html|safe}}
-          </div>
-        {% endfor %}
-    </div>
-    <br>
-    <br>
-    <hr>
+			  {{question_html|safe}}
+		  </div>
+		{% endfor %}
+	</div>
+	<br>
+	<br>
+	<hr>
 
 {% endblock content %}
 <script type="text/javascript">
@@ -94,6 +94,8 @@ function strip(html)
 <script>
 
 var qids = [];
+qnumber = [];
+num =1;
 var questions_htmls = [];
 var question_statements = [];
 var time_spent = [];
@@ -101,7 +103,9 @@ var question_marks = [];
 var last_clicked_qid = "null";
 
 {% for qid, question_html in question_paper %}
-          qids.push(`{{qid}}`);
+		  qids.push(`{{qid}}`);
+		  qnumber.push(num);
+		  num = num+1;
 {% endfor %}
 {% for time in time_spent %}
 	time_spent.push({{time}});
@@ -131,23 +135,23 @@ $('#avg-time').html(total_time/time_spent.length);
 var doughnut_chart_canvas = document.getElementById("doughnut-chart-canvas");
 var doughnut_chart_ctx = doughnut_chart_canvas.getContext("2d");
 var color = [
-    'lightgreen',    // color for data at index 0
-    'pink',   // color for data at index 1
-    'grey',  // color for data at index 2
+	'lightgreen',    // color for data at index 0
+	'pink',   // color for data at index 1
+	'grey',  // color for data at index 2
 	];
 
 var data = {
-    datasets: [{
-        data: [{{attempt_details.correct}}, {{attempt_details.incorrect}}, {{attempt_details.unanswered}}]
-    }],
+	datasets: [{
+		data: [{{attempt_details.correct}}, {{attempt_details.incorrect}}, {{attempt_details.unanswered}}]
+	}],
 
-    // These labels appear in the legend and in the tooltips when hovering different arcs
-    labels: [
-        'Correct',
-        'Incorrect',
-        'Unanswered',
-    ],
-    backgroundColor:color
+	// These labels appear in the legend and in the tooltips when hovering different arcs
+	labels: [
+		'Correct',
+		'Incorrect',
+		'Unanswered',
+	],
+	backgroundColor:color
 };
 
 
@@ -173,7 +177,7 @@ var bar_chart  =  new Chart(bar_chart_ctx,
 		type:"bar",
 		data:
 			{
-				labels: qids,
+				labels: qnumber,
 				datasets:[
 					{label: ["Total time spent on each question in seconds"],
 						data: time_spent,
@@ -217,12 +221,12 @@ var bar_chart  =  new Chart(bar_chart_ctx,
 					]
 				},
 			tooltips: {
-       			 callbacks: {
-            			label: function(tooltipItem) {
-                			return "Question: " + $.trim(strip(question_statements[tooltipItem.index]));
-            			}
-        			}
-    			}
+				 callbacks: {
+						label: function(tooltipItem) {
+							return "Question: " + $.trim(strip(question_statements[tooltipItem.index]));
+						}
+					}
+				}
 			}
 	}
 	);
