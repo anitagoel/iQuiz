@@ -1,3 +1,16 @@
 .questions{
 	display:none;	
 }
+
+.half{
+	width:40%;
+}
+
+#doughnut-chart-canvas-first{
+	width:50%;
+}
+
+
+#doughnut-chart-canvas-second{
+	width:50%;
+}

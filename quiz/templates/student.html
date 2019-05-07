@@ -19,9 +19,10 @@
         <button id='general_instructions_button' type="button" class="btn btn-primary" data-toggle="modal" data-target="#general-instructions">General Instructions</button>
         {% if information %}
          <button id= 'information_modal_button' type="button" class="btn btn-info" data-toggle="modal" data-target="#information">Information</button>
-  
         {% endif %}
+        {% if analytics_button %}
         <button onclick="location='/analytics_page';" id='analytics_button' type="button" class="btn btn-primary">Analytics</button>
+        {% endif %}
     </div>
 
     <div class="modal fade" id="general-instructions" tabindex="-1" role="dialog" aria-labelledby="general-instructions-label"

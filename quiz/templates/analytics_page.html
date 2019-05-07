@@ -3,7 +3,7 @@
 {% load static %}
 
         {% block head_ext %}
-            <link id="attempt_analytics_css" rel="stylesheet" type="text/css" href="{% static 'css/analytics.css' %}">
+            <link id="analytics_css" rel="stylesheet" type="text/css" href="{% static 'css/analytics.css' %}">
             <link id="responded-question-paper-css" rel="stylesheet" type="text/css" href="{% static 'css/responded-question-paper.css' %}">
             <link rel='stylesheet' href="{% static 'css/loading.css' %}" >
         {% endblock head_ext %}
@@ -16,11 +16,12 @@
         </div>
     {% endif %}
     
-    <div class="top-bar">
-        <button onclick="location="/student" id='back_button' type="button" class="btn btn-primary">Goto Home</button>
+    <div class="top-bar" >
+        <button onclick="location='/student'" id='back_button' type="button" class="btn btn-primary">Goto Home</button>
     </div>
-
+    <div style=" text-align: center;">
     <h1 text-align="center">iQuiz Analytics</h1>
+    </div>
 
     {% if message %}
         {% if success %} <div class="alert alert-info fade in">
@@ -32,9 +33,10 @@
 
     <br>
     <div class="text-center">
-        <h4>Answers Summary</h4>
+        <h4>Compare Attempts Summary</h4>
+        <p>Number of Correct, Incorrect and Unanswered questions in the last two attempts.</p>
             <div id="doughnut-chart" class="doughnut-chart">
-                <canvas id="doughnut-chart-canvas"></canvas>
+                <canvas width="50%" id="doughnut-chart-canvas"></canvas>
             </div>
     </div>
 
@@ -46,7 +48,8 @@
                 <h5>Minimum Time Spent</h5>
               </div>
               <div class="card-body">
-                <h5 id="min-time" class="card-title"></h5>
+                <small>Last</small><h5 id="min-time-first" class="card-title"></h5>
+                <small>2nd Last</small><h5 id="min-time-second" class="card-title"></h5>
               </div>
             </div>
         </div>
@@ -56,7 +59,8 @@
                 <h5>Maximum Time Spent</h5>
               </div>
               <div class="card-body">
-                <h5 id="max-time" class="card-title"></h5>
+                <small>Last</small><h5 id="max-time-first" class="card-title"></h5>
+                <small>2nd Last</small><h5 id="max-time-second" class="card-title"></h5>
               </div>
             </div>
         </div>
@@ -66,7 +70,8 @@
                 <h5>Average Time Spent</h5>
               </div>
               <div class="card-body">
-                <h5 id="avg-time" class="card-title"></h5>
+                <small>Last</small><h5 id="avg-time-first" class="card-title"></h5>
+                <small>2nd Last</small><h5 id="avg-time-second" class="card-title"></h5>
               </div>
             </div>
         </div>
@@ -75,17 +80,23 @@
     <hr>
 
     <div id="questions-bar-chart">
-    <h5>Bar chart shows the time spent on each question. You can click on the bars to view the questions. 
-        You can analyse how much time you spent on each question. Green bars are the questions which are correctly
-        answered, pink ones are for incorrect, and the grey bars denote unattempted questions.</h5>
+    <h5>Compare your last two attempts with following bar chart!</h5>
     <br>
     <canvas id="bar-canvas" class="chartjs" width="undefined" height="undefined"></canvas>
     </div>
     <hr>
-    <div id="questions">
-        {% for qid, question_html in question_paper %}
-          <div class="questions" id="qid-{{qid}}">
-              <span style="display:inline-block">{{forloop.counter}}</span>
+    <div id="questions-first">
+        {% for qid, question_html in question_paper_first %}
+          <div class="questions" id="qid-first-{{qid}}">
+              <h3>Last Attempt</h3>
+              {{question_html|safe}}
+          </div>
+        {% endfor %}
+    </div>
+    <div id="questions-second">
+        {% for qid, question_html in question_paper_second %}
+          <div class="questions" id="qid-second-{{qid}}">
+          <h3>Second Last Attempt</h3>
               {{question_html|safe}}
           </div>
         {% endfor %}
@@ -114,42 +125,79 @@ function strip(html)
 <script>
 
 var qids = [];
-var questions_htmls = [];
+var questions_htmls_first = [];
 var question_statements = [];
-var time_spent = [];
-var question_marks = [];
+var time_spent_first = [];
+var question_marks_first = [];
+
+var questions_htmls_second = [];
+var time_spent_second = [];
+var question_marks_second = [];
+
 var last_clicked_qid = "null";
-
-{% for qid, question_html in question_paper %}
-          qids.push(`{{qid}}`);
-{% endfor %}
-{% for time in time_spent %}
-    time_spent.push({{time}});
-{% endfor %}
-
-$('#min-time').html(Math.min(...time_spent));
-
-$('#max-time').html(Math.max(...time_spent));
-var total_time = 0;
-for (i=0; i<time_spent.length; i++){
-    total_time += time_spent[i];
-}
-$('#avg-time').html(total_time/time_spent.length);
-
-//time_spent_clone = time_spent.slice();
-
-
-{% for marks in question_marks %}
-    question_marks.push({{marks}});
-{% endfor %}
 
 {% for stmt in question_statements %}
     question_statements.push(`{{stmt|safe}}`);
 {% endfor %}
 
+//////////////////For the First attempt //////////////////////
+{% for qid, question_html in question_paper_first %}
+          qids.push(`{{qid}}`);
+{% endfor %}
+
+{% for time in time_spent_first %}
+    time_spent_first.push({{time}});
+{% endfor %}
+
+
+var total_time = 0;
+for (i=0; i<time_spent_first.length; i++){
+    total_time += time_spent_first[i];
+}
+avg_time_first = total_time/time_spent_first.length;
+//time_spent_clone = time_spent.slice();
+
+{% for marks in question_marks_first %}
+    question_marks_first.push({{marks}});
+{% endfor %}
+
+/////////////////////////////////////////////////////////////////////
+
+//////////////////For the second attempt //////////////////////
+
+{% for time in time_spent_second %}
+    time_spent_second.push({{time}});
+{% endfor %}
+
+$('#min-time-first').html( Math.min(...time_spent_first));
+$('#max-time-first').html( Math.max(...time_spent_first));
+
+$('#min-time-second').html(Math.min(...time_spent_second));
+$('#max-time-second').html(Math.max(...time_spent_second));
+
+var total_time = 0;
+for (i=0; i<time_spent_second.length; i++){
+    total_time += time_spent_second[i];
+}
+avg_time_second = total_time/time_spent_second.length;
+$('#avg-time-first').html(avg_time_first);
+$('#avg-time-second').html(avg_time_second);
+
+
+//time_spent_clone = time_spent.slice();
+
+
+{% for marks in question_marks_second %}
+    question_marks_second.push({{marks}});
+{% endfor %}
+
+/////////////////////////////////////////////////////////////////////
+
 
 var doughnut_chart_canvas = document.getElementById("doughnut-chart-canvas");
 var doughnut_chart_ctx = doughnut_chart_canvas.getContext("2d");
+
+
 var color = [
     'lightgreen',    // color for data at index 0
     'pink',   // color for data at index 1
@@ -158,7 +206,7 @@ var color = [
 
 var data = {
     datasets: [{
-        data: [{{attempt_details.correct}}, {{attempt_details.incorrect}}, {{attempt_details.unanswered}}]
+        data: [{{attempt_details_first.correct}}, {{attempt_details_first.incorrect}}, {{attempt_details_first.unanswered}}]
     }],
 
     // These labels appear in the legend and in the tooltips when hovering different arcs
@@ -176,18 +224,44 @@ options = {};
 var doughnut_chart = new Chart(doughnut_chart_ctx, {
     type:"doughnut",
     data:{
-        labels:["Correct","Incorrect","Unanswered"],
+        
         datasets:[
-            {
-                data:[{{attempt_details.correct}},{{attempt_details.incorrect}},{{attempt_details.unanswered}}],
+            {   label: "Last Attempt",
+                labels:["Correct","Incorrect","Unanswered"],
+                data:[{{attempt_details_first.correct}},{{attempt_details_first.incorrect}},{{attempt_details_first.unanswered}}],
+                backgroundColor:["lightgreen","pink","grey"]
+            },
+            {   label: "2nd Last Attempt",
+                labels:["Correct","Incorrect","Unanswered"],
+                data:[{{attempt_details_second.correct}},{{attempt_details_second.incorrect}},{{attempt_details_second.unanswered}}],
                 backgroundColor:["lightgreen","pink","grey"]
             }
             ]
+        },
+    options: {
+        legend: {
+                        position: 'top',
+                    },
+          title: {
+                        display: true,
+                        text: 'Correct, Incorrect, and Unanswered Question in Last Two Attempts'
+                    },
+      tooltips: {
+        callbacks: {
+            label: function(tooltipItem, data) {
+            var dataset = data.datasets[tooltipItem.datasetIndex];
+            var index = tooltipItem.index;
+            return dataset.label + " " + dataset.labels[index] + ': ' + dataset.data[index];
+          }
         }
+      }
+    }
     }
     );
-var bar_chart_ctx = document.getElementById("bar-canvas").getContext("2d");
 
+
+var bar_chart_ctx = document.getElementById("bar-canvas").getContext("2d");
+var x;
 var bar_chart  =  new Chart(bar_chart_ctx,
     {
         type:"bar",
@@ -195,12 +269,31 @@ var bar_chart  =  new Chart(bar_chart_ctx,
             {
                 labels: qids,
                 datasets:[
-                    {label: ["Total time spent on each question in seconds"],
-                        data: time_spent,
-                        fill:false,
+                    {label: "Last Attempt",
+                        data: time_spent_first,
+                        
                         backgroundColor: function(context) 
                             { 
-                                marks = question_marks[context.dataIndex];
+                                marks = question_marks_first[context.dataIndex];
+                                if (marks == "null"){
+                                    return "grey";
+                                }
+                                if (marks > 0){
+                                    return "lightgreen";
+                                }
+                                return "pink";
+                            },
+
+                        borderColor:["rgb(255, 99, 132)","rgb(255, 159, 64)"],
+                        borderWidth:1
+                    },
+                    {
+                        label: "Last Attempt",
+                        data: time_spent_second,
+                        
+                        backgroundColor: function(context) 
+                            { 
+                                marks = question_marks_second[context.dataIndex];
                                 if (marks == "null"){
                                     return "grey";
                                 }
@@ -217,13 +310,24 @@ var bar_chart  =  new Chart(bar_chart_ctx,
             },
         options:
             {
+                legends: {
+                    position:'top',
+                },
+            title: {
+                        display: true,
+                        text: 'Time Spent vs Questions for Last Two Attempts'
+                    },
             onClick: function(context, bar) {
                 if (bar==null) return;
+                console.log(bar);
+                x=bar;
                 var index = bar[0]._index;
-                var id="#qid-" + qids[index];
+                var id1="#qid-first-" + qids[index];
+                var id2="#qid-second-" + qids[index];
                 $(last_clicked_qid).hide();
-                $(id).show();
-                last_clicked_qid = id;
+
+                $(id1+','+id2).show();
+                last_clicked_qid = id1+','+id2;
             },
             scales:
                 {
@@ -239,7 +343,15 @@ var bar_chart  =  new Chart(bar_chart_ctx,
             tooltips: {
                  callbacks: {
                         label: function(tooltipItem) {
-                            return "Question: " + $.trim(strip(question_statements[tooltipItem.index]));
+                            x=tooltipItem;
+                            if (tooltipItem.datasetIndex == 0){
+                                tooltipItem.label = "Last Attempt";
+                                return "Question: " + $.trim(strip(question_statements[tooltipItem.index]));
+                            }
+                            else {
+                                tooltipItem.label = "2nd Last Attempt";
+                                return "Second Last Attempt\nQuestion: " + $.trim(strip(question_statements[tooltipItem.index]));
+                            }
                         }
                     }
                 }
@@ -247,9 +359,6 @@ var bar_chart  =  new Chart(bar_chart_ctx,
     }
     );
 
+
 </script>
-
-
-
-
 {% endblock javascript %}

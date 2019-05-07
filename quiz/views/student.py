@@ -23,7 +23,7 @@ def index(request):
 
 
 @validate_user
-def home(request):
+def home(request, message=None):
     student = db.get_user(request)
     quiz = db.get_quiz(request)
     if quiz:
@@ -47,6 +47,7 @@ def home(request):
 
         # Check if the student has attempt left or not, if the handle is not None, then
         # we need to return the handle itself.
+        analytics_button = True if db.get_used_attempt_number(quiz, student) > 1 else False
         handle = handle_previous_attempt(request)
         if handle:
             return handle
@@ -57,6 +58,8 @@ def home(request):
                 'max_attempts' : max_attempts,
                 'total_questions_number' : total_questions_number,
                 'duration' : duration,
+                'analytics_button': analytics_button,
+                'message' : message
                 })
 
     return render(request, 'error.html', {'success': False, 'message': "The quiz cannot be found! Please try later!"})
@@ -397,7 +400,7 @@ def get_attempts_details_and_paper(quiz, response_object, get_time_spent=False):
         html = question_type.get_student_responded_paper_view_html(question, response)
         questions_html.append((question.id, html))
         question_statements.append(question_type.get_statement_html(question))
-
+        print(html)
         if get_time_spent:
             time_spent.append(Answer.get_time_spent(response_object, question))
             if (response is None):
@@ -410,6 +413,7 @@ def get_attempts_details_and_paper(quiz, response_object, get_time_spent=False):
 
     if get_time_spent:
         return attempt, questions_html,question_statements, time_spent, question_marks
+    
     return attempt, questions_html
 
 
@@ -525,30 +529,36 @@ def analytics_page(request):
     quiz = db.get_quiz(request)
     user = db.get_user(request)
     quiz_settings = db.get_quiz_settings(quiz)
-    if not (request.POST and 'attempt_id' in request.POST):
-        return JsonResponse({'content': '<h4>Invalid Request</h4>'})
-    attempt_id = request.POST['attempt_id']
-    try:
-        response = Response.objects.get(id=attempt_id)
-    except:
-        pass
-    if not response or (lti.is_student(request) and response.user != user):
-        return JsonResponse(
-            dict(content='<h4>Invalid Attempt ID, try again or please contact admin for resolution of the error.</h4>')
-        )
+
+    attempts = Response.objects.filter(quiz=quiz, user = user)
+    total_attempts  = attempts.count()
+    if (total_attempts == 1):
+        #only one attempt
+        return home(request, "Analytics can only be shown if there are more than one attempts!")
+
+    response_first = attempts[total_attempts - 1]    # last attempt
+    response_second = attempts[total_attempts - 2]   # second last attempt
 
     # Return the full details of the response
-    attempt_details_full, question_paper, question_statements, time_spent,question_marks = get_attempts_details_and_paper(quiz, response, True)
+    attempt_details_full_first, question_paper_first, question_statements, time_spent_first ,question_marks_first = get_attempts_details_and_paper(quiz, response_first, True)
+
+    attempt_details_full_second, question_paper_second, question_statements, time_spent_second ,question_marks_second = get_attempts_details_and_paper(quiz, response_second, True)
 
     template = loader.get_template('analytics_page.html')
     content = template.render({
-        'attempt_details': attempt_details_full, 
-        'question_paper': question_paper, 
-        'time_spent': time_spent, 
-        'question_marks':question_marks, 
+        'attempt_details_first': attempt_details_full_first, 
+        'question_paper_first': question_paper_first, 
+        'time_spent_first': time_spent_first, 
+        'question_marks_first':question_marks_first, 
+        'attempt_details_second': attempt_details_full_second, 
+        'question_paper_second': question_paper_second, 
+        'time_spent_second': time_spent_second, 
+        'question_marks_second':question_marks_second, 
         'question_statements':question_statements
         }
     )
-    
     return HttpResponse(content)
 
+
+def get_average_time_spent_for_all_attempt(quiz):
+    return 0
