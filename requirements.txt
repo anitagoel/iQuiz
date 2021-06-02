@@ -10,7 +10,7 @@ idna==2.8
 kiwisolver==1.0.1
 lti==0.9.4
 lxml==4.3.0
-markdown2==2.3.7
+markdown2==2.4.0
 numpy==1.16.1
 oauth2==1.9.0.post1
 oauthlib==3.0.0
