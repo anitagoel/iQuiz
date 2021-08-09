@@ -67,7 +67,7 @@ img { max-width: 100%; }
 	width: 181px;
 	height: 43px;
 	margin: 0 auto;
-	background: url(../img/logo.png) center center no-repeat;
+	/* background: url(../img/logo.png) center center no-repeat; */
 }
 
 .top-content .text h1 {
