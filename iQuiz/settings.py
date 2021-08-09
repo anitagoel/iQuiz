@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 from .iQuiz_settings import *   # import the LTI_OAUTH_CREDENTIALS
-import django_heroku
+import django_heroku, dj_database_url
 
 django_heroku.settings(locals)
 
@@ -94,6 +94,10 @@ WSGI_APPLICATION = 'iQuiz.wsgi.application'
 #         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
 #     }
 # }
+
+DATABASES = {
+    'default': dj_database_url.config(default=DATABASE_URL)
+}
 
 
 
