@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 import os
 from .iQuiz_settings import *   # import the LTI_OAUTH_CREDENTIALS
 import dj_database_url
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
 # django_heroku.settings(locals)
 
