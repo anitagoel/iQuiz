@@ -1,10 +1,12 @@
 from ..models import *
+from django.db import models
 
 
 class Difficulty(models.TextChoices):
-        HIGH = 'high'
-        MEDIUM = 'medium'
-        LOW = 'low'
+    HIGH = 'high'
+    MEDIUM = 'medium'
+    LOW = 'low'
+
 
 class Question(models.Model):
     """
