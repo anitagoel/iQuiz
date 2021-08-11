@@ -88,11 +88,13 @@ def get_questions_by_quiz(quiz):
     return Question.objects.order_by('serial_number').filter(quiz = quiz)
 
 
-def get_published_questions(quiz):
+def get_published_questions(quiz, random=None):
     """
     Returns the QuerySet of the published questions for the given quiz
     """
     questions = get_questions_by_quiz(quiz) #Questions are ordered by serial number
+    if random:
+        return questions.filter(published = True).order_by('?')
     return questions.filter(published = True)
 
 

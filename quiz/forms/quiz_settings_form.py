@@ -9,4 +9,4 @@ class QuizSettingsForm(ModelForm):
 
     class Meta:
         model = QuizSettings
-        fields = ['deadline', 'duration', 'timeBetweenAttempt', 'maxAttempts' , 'information']
+        fields = ['randomizeQuestionOrder','deadline', 'duration', 'timeBetweenAttempt', 'maxAttempts' , 'information']

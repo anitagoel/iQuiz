@@ -45,6 +45,7 @@ class QuizSettings(models.Model):
     The class to store the Settings of a Quiz
     """
     quiz = models.OneToOneField(Quiz, on_delete = models.CASCADE, primary_key=True)
+    randomizeQuestionOrder = models.BooleanField(default=False)
     deadline = models.DateTimeField(
         blank=True,
         null=True,

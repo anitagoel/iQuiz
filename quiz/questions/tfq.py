@@ -21,7 +21,7 @@ class TFQForm(forms.ModelForm):
 
     class Meta:
         model = Question
-        fields = ['question_weight', 'draft_statement']
+        fields = ['draft_statement', 'question_weight', 'question_difficulty']
 
 
 class TFQ(AbstractQuestion):

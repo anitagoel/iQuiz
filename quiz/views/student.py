@@ -76,11 +76,11 @@ def resume_quiz(request, previous_attempt):
 
     
     quiz = db.get_quiz(request)
-    questions = db.get_published_questions(quiz)  # returns QuerySet of the published questions
+    quiz_settings = db.get_quiz_settings(quiz)
+    questions = db.get_published_questions(quiz, random=quiz_settings.randomizeQuestionOrder)  # returns QuerySet of the published questions
     end_time_stamp = previous_attempt.end_time.timestamp()
     # time left in milliseconds if end_time_stamp is there
     time_left = (end_time_stamp -  datetime.datetime.utcnow().timestamp()) * 1000 if end_time_stamp else None
-    quiz_settings = db.get_quiz_settings(quiz)
     information = quiz_settings.information
     total_questions_number = questions.count()
 
@@ -203,7 +203,7 @@ def save_response(request):
         question = Question.objects.get(pk = qid_viewing_time)      # get the question with id qid_viewing_time
         Answer.add_time_spent(attempt, question, time_duration)
         return JsonResponse({'success':'true'})
-
+    
     for qid_string in request.POST:
         # check that the student can only access the question of the quiz they are answering
         # TODO: Check the response request.POST[qid_string] is valid! It seems like a
