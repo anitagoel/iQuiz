@@ -15,8 +15,8 @@ from .question import AbstractQuestion
 
 CHECK_FORM_SAVE_REQUEST = "form-save-request"  # this helps in identifying that the POST request is saving form
 
-class MCQForm(forms.ModelForm):
-    draft_statement = forms.CharField(widget=PagedownWidget(attrs={'placeholder': 'Question Statement', 'rows': 2}),
+class SAQForm(forms.ModelForm):
+    draft_statement = forms.CharField(widget=PagedownWidget(attrs={'placeholder': 'Question Statement', 'rows': 3}),
                                       strip=False)
 
     class Meta:
@@ -24,12 +24,12 @@ class MCQForm(forms.ModelForm):
         fields = ['question_weight', 'draft_statement', 'question_difficulty']
 
 
-class MCQ(AbstractQuestion):
+class SAQ(AbstractQuestion):
     """
-    The class is to implement the Multiple Choice type Question.
+    The class is to implement the Subjective Answer type Question.
     """
-    CLASS_NAME = "MCQ"
-    CLASS_VERBOSE_NAME = "Multiple Choice Question"
+    CLASS_NAME = "SAQ"
+    CLASS_VERBOSE_NAME = "Subjective Answer Question"
     # POST Request Variable name as used in MCQ template
     DRAFT_OPTIONS = "draft_options"
     DRAFT_STATEMENT = "draft_statement"
@@ -43,47 +43,49 @@ class MCQ(AbstractQuestion):
         which will be used to edit/add a new question.
         On success return to HttpResponseRedirect(reverse('edit')). 
         """
-        question.question_type = MCQ.CLASS_NAME
-        template = loader.get_template('questions/mcq-form.html')
+        question.question_type = SAQ.CLASS_NAME
+        template = loader.get_template('questions/saq-form.html')
         message = None
         # fill the variables from the POST if possible, else from the 
         # question
-        if question.draft_options_data and question.draft_options_data != '':
-            options = json.loads(question.draft_options_data)
-            expected_option_id = question.draft_expected_response
-        else:
-            options = [['option_1', ''], ['option_2', '']]
-            expected_option_id = ''
+        # if question.draft_options_data and question.draft_options_data != '':
+        #     options = json.loads(question.draft_options_data)
+        #     expected_option_id = question.draft_expected_response
+        # else:
+        # options = [['option_1', ''], ['option_2', '']]
+        options = []
+        expected_option_id = ''
 
         if request.method == "POST" and request.POST.get(CHECK_FORM_SAVE_REQUEST, False):
             valid = True
-            form = MCQForm(data = request.POST, instance=question)
-            options_list = request.POST.getlist(MCQ.DRAFT_OPTIONS)
+            form = SAQForm(data = request.POST, instance=question)
+            # options_list = request.POST.getlist(SAQ.DRAFT_OPTIONS)
             # following if-block might not be required?
-            if MCQ.DRAFT_OPTIONS not in request.POST or len(options_list) < 2:
-                message = "Add at least two options!"
-                valid = False
-            expected_option_id = request.POST.get(MCQ.CORRECT_RESPONSE,False)
-            if not expected_option_id:
-                message="Please add a correct option"
-                valid = False
+            # if SAQ.DRAFT_OPTIONS not in request.POST or len(options_list) < 2:
+                # message = "Add at least two options!"
+                # valid = False
+            # Todo: Add Points expected in answer!
+            # expected_option_id = request.POST.get(SAQ.CORRECT_RESPONSE,False)
+            # if not expected_option_id:
+                # message="Please add a correct option"
+                # valid = False
             if valid:
                 # Store the option of the form as tuples (option_id, option_markdown)
-                option_tuples = []
-                for i in range(len(options_list)):
-                    option = options_list[i]
-                    option_tuples.append(("option_" + str(i + 1), option))
+                # option_tuples = []
+                # for i in range(len(options_list)):
+                    # option = options_list[i]
+                    # option_tuples.append(("option_" + str(i + 1), option))
 
                 if form.is_valid():
                     qs = form.save(commit=False)
                     qs.draft_expected_response = expected_option_id
-                    qs.draft_options_data = json.dumps(option_tuples)
+                    # qs.draft_options_data = json.dumps(option_tuples)
                     qs.save()
                     message = "The question is saved/updated successfully!"
                     return JsonResponse({'replace_content': "edit", 'message' : message})
 
         else:
-            form = MCQForm(instance=question)
+            form = SAQForm(instance=question)
         context = {'form': form, 'options': options,
                                'expected_option_id': expected_option_id}
 
@@ -109,23 +111,23 @@ class MCQ(AbstractQuestion):
 
     @staticmethod
     def get_student_view_html(question):
-        options = json.loads(question.options_data)
-        template = loader.get_template('questions/mcq.html')
+        # options = json.loads(question.options_data)
+        template = loader.get_template('questions/saq.html')
         context = {
             'qid': question.id,
-            'statement': MCQ.get_statement_html(question),
-            'options': options,
+            'statement': SAQ.get_statement_html(question),
+            # 'options': options,
         }
         return template.render(context)
 
     @staticmethod
     def get_student_responded_view_html(question, response):
-        options = json.loads(question.options_data)
-        template = loader.get_template('questions/mcq.html')
+        # options = json.loads(question.options_data)
+        template = loader.get_template('questions/saq.html')
         context = {
             'qid': question.id,
-            'statement': MCQ.get_statement_html(question),
-            'options': options,
+            'statement': SAQ.get_statement_html(question),
+            # 'options': options,
             'checked_option_id': response,
         }
         return template.render(context)
@@ -140,15 +142,15 @@ class MCQ(AbstractQuestion):
         :param response: response corresponding to the question
         :return: string : html
         """
-        options = json.loads(question.options_data)
-        correct_option_id = question.expected_response
-        template = loader.get_template('questions/mcq.html')
+        # options = json.loads(question.options_data)
+        # correct_option_id = question.expected_response
+        template = loader.get_template('questions/saq.html')
         context = {
             'qid': question.id,
-            'statement': MCQ.get_statement_html(question),
-            'options': options,
+            'statement': SAQ.get_statement_html(question),
+            # 'options': options,
             'checked_option_id': response,
-            'correct_option_id': correct_option_id
+            # 'correct_option_id': correct_option_id
         }
         return template.render(context)
 

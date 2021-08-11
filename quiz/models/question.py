@@ -16,7 +16,7 @@ class Question(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     question_type = models.CharField(max_length = 100, null=True)
     question_weight = models.DecimalField(decimal_places = 2, max_digits = 5, default = 1)
-    question_difficulty = models.CharField(max_length=20, choices=Difficulty.choices)
+    question_difficulty = models.CharField(max_length=20, choices=Difficulty.choices, default=Difficulty.LOW)
     serial_number = models.PositiveIntegerField(default = 1, verbose_name="Serial Number")
     draft_statement = models.TextField(default='', null=True)
     draft_options_data = models.TextField(null=True)

@@ -1,0 +1,39 @@
+{% extends 'questions/question.html' %}
+{% load markdown_deux_tags %}
+
+
+{% block options %}
+
+<div class='field custom-control custom-switch p-3'>
+	<textarea name='{{qid}}' class="form-control" rows="6" placeholder="Enter Your answer here">{% if checked_option_id %}{{checked_option_id}}{% endif %}</textarea>
+</div>
+
+
+
+{% if not correct_option_id %}
+	{% for option_id, option_value in options %}
+		<div class='field'>
+			<label class="mcq-option radio-inline">
+			<input id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}'  required  {% if checked_option_id == option_id %}checked{% endif %}>
+			<span>{{ option_value | markdown }}</span>
+			</label>
+		</div>
+	{% endfor %}
+
+{% else %}
+		{% comment %} {% for option_id, option_value in options %}
+			<div class='field custom-control custom-switch'>
+				    <label class="responded-option radio-inline {% if checked_option_id == option_id %}
+							{% if option_id != correct_option_id %}incorrect-selection
+							{% else %} perfect
+					{% endif %}
+				    {% else %}
+				    		{% if option_id == correct_option_id %}correct-option{% endif %}
+				   	{% endif %}">
+					<input class='custom-control-input' id='{{qid}}-{{option_id}}' type='radio' name='{{qid}}' value='{{option_id}}' disabled  {% if checked_option_id == option_id %}checked{% endif %}>
+						<span>{{ option_value | markdown }}</span>
+					</label>
+			</div>
+		{% endfor %} {% endcomment %}
+{% endif %}
+{% endblock options %}
