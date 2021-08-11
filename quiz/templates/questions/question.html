@@ -1,5 +1,12 @@
 <div id="div-{{qid}}">
 	<div class="statement">
+	{% if video_file %}
+	{% load static %}
+		<video width="320" height="240" controls>
+		<source src="{% get_media_prefix %}{{video_file}}" type="video/mp4">
+		Your browser does not support the video tag.
+		</video>
+	{% endif %}
 	{% block statement %}
 		{{ statement | safe}}
 	{% endblock statement %}

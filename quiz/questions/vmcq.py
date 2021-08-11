@@ -117,7 +117,9 @@ class VMCQ(AbstractQuestion):
             'qid': question.id,
             'statement': VMCQ.get_statement_html(question),
             'options': options,
+            'video_file': question.video_file,
         }
+        print(context)
         return template.render(context)
 
     @staticmethod
