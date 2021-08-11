@@ -16,6 +16,7 @@ class Response(models.Model):
     submitted = models.BooleanField(default= False)
 
     def add_or_update_response(self, qid, newResponse):
+        # breakpoint()
         response = json.loads(self.response)
         if response == '' or type(response) != dict:
             response = {}

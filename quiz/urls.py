@@ -1,6 +1,7 @@
 from django.urls import path
-from django.http import HttpResponse
 from . import views
+from django.conf.urls.static import static
+from django.conf import settings
 
 urlpatterns = [
         # URL for launching LTI or showing homepage
@@ -23,3 +24,7 @@ urlpatterns = [
         path('attempt_analytics', views.student.attempt_analytics, name="attempt_analytics"),
         path('analytics_page', views.student.analytics_page, name="analytics_page"),
         ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL,
+                          document_root=settings.MEDIA_ROOT)

@@ -169,6 +169,8 @@ def edit_question(request, question=None):
 
         question_type = QUESTION_TYPE[question_type_name]
         question = Question(quiz=quiz)        # create a new Question for the quiz
+        if request.FILES.get('video_file'):
+            question.video_file = request.FILES.get('video_file')
         quiz_questions = db.get_questions_by_quiz(quiz)
         if quiz_questions:
             last_question_index = quiz_questions.count() - 1

@@ -1,0 +1,65 @@
+{% extends 'questions/question-form.html' %}
+{% load markdown_deux_tags %}
+{% load static %}
+
+{% block head %}
+	{{ form.media }}
+	<link rel="stylesheet" href="{% static 'pagedown/custom.css' %}">
+{% endblock head %}
+
+
+{% block content %}
+<div>
+	<h2>Add/Edit Question</h2>
+	<h3>Video based Multiple Choice Question</h3>
+ 	<div>
+    <form id="form_id" action='edit_question' enctype="multipart/form-data" class="form-horizontal" method="POST" class="post-form">
+    	{% if not qid %}
+    	<input type="hidden" id="question-type" name="question_type" value="VMCQ">
+    	<input type="hidden" name="form-save-request" value="true">
+    	{% else %}
+    	<input type="hidden" id="qid-form" name="qid" value="{{qid}}">
+		{% endif %}
+    	<div class="table-responsive">
+	   		<table  class='table table-bordered table-striped table-highlight'>
+	   		<tbody id="form-table">
+	   		{{ form }}
+	   		{% for option_id, option_value in options %}
+	   		<tr id='row-{{option_id}}'>
+	   			<th><input type="radio" name="correct_option" {% if expected_option_id == option_id %} checked="checked" {% endif %} value="{{option_id}}" required> <label for="id_draft_options_{{ forloop.counter }}">Option {{ forloop.counter }} </label></th>
+				  	<td>
+					  	<div class="wmd-wrapper" id="id_draft_options_{{ forloop.counter }}-wmd-wrapper">
+					    	<div class="wmd-panel">
+						        <div id="id_draft_options_{{ forloop.counter }}_wmd_button_bar"></div>
+						      	 <textarea class="wmd-input" cols="40" id="id_draft_options_{{ forloop.counter }}" name="draft_options" rows="2" placeholder='Option' required>{{option_value}}</textarea>
+					    	</div>
+					    	<p class="wmd-preview-title">
+					        	<small>HTML Preview:</small>
+					    	</p>
+					    	<div id="id_draft_options_{{ forloop.counter }}_wmd_preview" class="wmd-panel wmd-preview"></div>
+						</div>
+				 </td>
+			</tr>
+	   		{% endfor %}
+	   		
+	   		</tbody>
+	  		</table>
+	  	</div>
+		<button id='addNewOptionButton' type="button" onclick="addNewOption()" class="btn btn-info">Add New Option</button>
+        <button type="submit" class="save btn btn-primary">Save</button>
+    </form>
+    </div>
+ </div>
+
+
+{% block javascript %}
+<script>
+{% if options %}
+	var current_option_number = {{options|length}};	
+{% else %}
+	var current_option_number = 0;
+{% endif %}
+</script>
+<script src="{% static 'js/questions/vmcq.js' %}"></script>
+{% endblock javascript %}
+{% endblock content %}
