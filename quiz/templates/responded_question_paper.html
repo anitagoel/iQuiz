@@ -22,14 +22,16 @@ if (!$('head #responded-question-paper-css')[0])
 		        <th>Total Question</th>
 		        <td>{{attempt_details.total_questions}}</td>
 		    </tr>
-	        <tr>
-	            <th>Correct Answers</th>
-	            <td>{{attempt_details.correct}}</td>
-	        </tr>
-	        <tr>
-	            <th>Incorrect Answers</th>
-	            <td>{{attempt_details.incorrect}}</td>
-	        </tr>
+			{% if attempt_details.correct %}
+				<tr>
+					<th>Correct Answers</th>
+					<td>{{attempt_details.correct}}</td>
+				</tr>
+				<tr>
+					<th>Incorrect Answers</th>
+					<td>{{attempt_details.incorrect}}</td>
+				</tr>
+			{% endif %}
 	         <tr>
 	            <th>Unattempted Questions</th>
 	            <td>{{attempt_details.unanswered}}</td>

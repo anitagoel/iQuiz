@@ -131,11 +131,12 @@ class VMCQ(AbstractQuestion):
             'statement': VMCQ.get_statement_html(question),
             'options': options,
             'checked_option_id': response,
+            'video_file': question.video_file,
         }
         return template.render(context)
 
     @staticmethod
-    def get_student_responded_paper_view_html(question, response):
+    def get_student_responded_paper_view_html(question, response, showAnswer):
         """
         Returns the HTML representation for the Question for the Responded Paper.
         It has disabled options, it can be used to generate the report of the student
@@ -152,7 +153,8 @@ class VMCQ(AbstractQuestion):
             'statement': VMCQ.get_statement_html(question),
             'options': options,
             'checked_option_id': response,
-            'correct_option_id': correct_option_id
+            'correct_option_id': correct_option_id if showAnswer else None,
+            'video_file': question.video_file,
         }
         return template.render(context)
 

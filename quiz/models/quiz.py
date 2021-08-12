@@ -45,7 +45,7 @@ class QuizSettings(models.Model):
     The class to store the Settings of a Quiz
     """
     quiz = models.OneToOneField(Quiz, on_delete = models.CASCADE, primary_key=True)
-    randomizeQuestionOrder = models.BooleanField(default=False)
+    randomizeQuestionOrder = models.BooleanField(default=False, verbose_name="Randomize Question Order")
     deadline = models.DateTimeField(
         blank=True,
         null=True,
@@ -85,6 +85,11 @@ class QuizSettings(models.Model):
          This will be shown in a html modal on clicking the button 'Information'. Leave blank to hide the button."
     )
     # TODO: showAnswers = models.ChoiceField() ##To be implemented
+    showAnswersAfterAttempt = models.BooleanField(
+        default=True,
+        verbose_name="Show Answers After Attempt",
+        help_text="Show correct answers to students after the attempt."
+        )
 
     def __str__(self):
         if self.quiz.quizName != '':

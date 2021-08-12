@@ -131,7 +131,7 @@ class MCQ(AbstractQuestion):
         return template.render(context)
 
     @staticmethod
-    def get_student_responded_paper_view_html(question, response):
+    def get_student_responded_paper_view_html(question, response, showAnswer):
         """
         Returns the HTML representation for the Question for the Responded Paper.
         It has disabled options, it can be used to generate the report of the student
@@ -148,7 +148,7 @@ class MCQ(AbstractQuestion):
             'statement': MCQ.get_statement_html(question),
             'options': options,
             'checked_option_id': response,
-            'correct_option_id': correct_option_id
+            'correct_option_id': correct_option_id if showAnswer else None
         }
         return template.render(context)
 
