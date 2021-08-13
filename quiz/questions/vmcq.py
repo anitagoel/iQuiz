@@ -21,7 +21,7 @@ class VMCQForm(forms.ModelForm):
 
     class Meta:
         model = Question
-        fields = ['video_file', 'draft_statement', 'question_weight', 'question_difficulty']
+        fields = ['video_file', 'draft_statement', 'question_weight', 'question_difficulty', 'question_time_limit']
 
 
 class VMCQ(AbstractQuestion):

@@ -18,6 +18,7 @@ class Question(models.Model):
     video_file = models.FileField(upload_to='vmcq/', null=True, blank=True)
     question_weight = models.DecimalField(decimal_places = 2, max_digits = 5, default = 1)
     question_difficulty = models.CharField(max_length=20, choices=Difficulty.choices, default=Difficulty.LOW)
+    question_time_limit = models.PositiveIntegerField(default=0, help_text="Set time limit to 0 if there is no time limit for this question.<br>(Note: time is in seconds)")
     serial_number = models.PositiveIntegerField(default = 1, verbose_name="Serial Number")
     draft_statement = models.TextField(default='', null=True)
     draft_options_data = models.TextField(null=True)

@@ -21,7 +21,7 @@ class SAQForm(forms.ModelForm):
 
     class Meta:
         model = Question
-        fields = ['question_weight', 'draft_statement', 'question_difficulty']
+        fields = ['draft_statement', 'question_weight', 'question_time_limit', 'question_difficulty']
 
 
 class SAQ(AbstractQuestion):
