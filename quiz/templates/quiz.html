@@ -22,10 +22,15 @@ var time_left = false;
 
 var question_ids = [];  // stores the question ids of the question.
 var question_types = {}; // stores the question types for each question [corresponds to question_ids]
+var question_time_limits = {};
 
 {% for qid, question_type in question_types %}
 question_types[{{qid}}] = '{{question_type}}';
 question_ids.push({{qid}});
+{% endfor %}
+
+{% for qid, question_time in question_time_limits %}
+question_time_limits[{{qid}}] = {{question_time}};
 {% endfor %}
 
 {% if answered_question_ids %}
@@ -69,14 +74,15 @@ var answered_question_ids = [];
 
     {% for qid, question in questions_html %}
     <div id='div-question-{{qid}}' class='question hidden-question'>
+        <div>Time left to attend this question is: <span target="{{qid}}" class="question-timer"></span></div>
         <form id='form-question-{{qid}}' class="form-horizontal" method="POST" class="post-form">
             {{question|safe}}
         </form>
 
-        <button id='save-and-next-button' onClick="save_and_next({{qid}})" class="btn btn-info">Save and Next</button>
-        <button id='mark-for-review-button' onClick="mark_for_review_and_next('{{qid}}')" class="btn btn-dark">Mark For
+        <button id='save-and-next-button' {% if questions_html|length == forloop.counter %}disabled{%endif%} onClick="save_and_next({{qid}})" class="btn btn-info">Save and Next</button>
+        <!-- <button id='mark-for-review-button' onClick="mark_for_review_and_next('{{qid}}')" class="btn btn-dark">Mark For
             Review &amp; Next
-        </button>
+        </button> -->
         <button id='clear-response-button' onClick="clear_response('{{qid}}')" class="btn btn-dark">Clear Response
         </button>
         <hr/>
@@ -225,5 +231,8 @@ var answered_question_ids = [];
     if (time_left)
     	var timerStartedInterval = setInterval(timer_update, 1000);
     }
+
+    setTimeForQuestion(question_ids[current_question_index]);
+    
     </script>
     {% endblock javascript %}

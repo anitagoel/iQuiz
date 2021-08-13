@@ -99,6 +99,7 @@ def resume_quiz(request, previous_attempt):
     question_types = list()
     responses = previous_attempt.get_response()  # get the responses of the student for this attempt
     answered_question_ids = []  # will be used to store the ids of the questions which are already answered
+    question_time_limits = []
 
     for question in questions:
         question_type = QUESTION_TYPE[question.question_type]
@@ -114,6 +115,10 @@ def resume_quiz(request, previous_attempt):
         question_ids.append(question.id)
         question_types.append((question.id, question_type.CLASS_NAME))
         questions_statements.append((question.id, question_type.get_statement_html(question)))
+        if question.question_time_limit == 0:
+            question_time_limits.append((question.id, -1))
+        else:
+            question_time_limits.append((question.id, question.question_time_limit))
     
     context =  {
             'questions_html': questions_html,
@@ -123,6 +128,7 @@ def resume_quiz(request, previous_attempt):
             'information': information,
             'time_left': time_left,
             'answered_question_ids': answered_question_ids,
+            'question_time_limits': question_time_limits,
         }
 
     if request.is_ajax():
@@ -382,9 +388,12 @@ def get_attempts_details_and_paper(quiz, response_object, get_time_spent=False):
                response_object.start_time).total_seconds() // 60)) + " minutes"  # minutes
     allowed_time = db.get_quiz_settings(quiz).duration
     attempt['allowed_time'] = str(allowed_time) + " minutes" if allowed_time else "Unlimited"
-    if str(attempt['total_grade']).isdigit():
+    # Check if the total_grade is calculated or Shown after exam ends
+    if not str(attempt['total_grade']).isalpha():
+        # Grade is calculated so convert to percentage
         attempt['total_grade_percent'] = str(attempt['total_grade'] * 100) + "%"
-    else: attempt['total_grade_percent'] = attempt['total_grade']
+    else:
+        attempt['total_grade_percent'] = attempt['total_grade']
 
     # now we shall form the responded question paper
 
@@ -446,23 +455,23 @@ def get_attempt_stats(quiz, response):
     incorrect_answer = 0
     total_number = Question.objects.filter(quiz=quiz, published=True).count()
     response_data = response.get_response()
-    unanswered = total_number - (correct_answer + incorrect_answer)
 
-    if quiz.quizsettings.showAnswersAfterAttempt or datetime.datetime.now() > quiz.quizsettings.deadline:
-        for qid in response_data:
-            try:
-                question = Question.objects.get(id=int(qid))
-            except Question.DoesNotExists:
-                # there might be other kind of data in response_data we don't care about
-                continue
-            question_type = QUESTION_TYPE[question.question_type]
-            marks = question_type.get_marks(question, extract_response(response_data, qid))
-            total_marks += marks
-            if marks > 0:
-                correct_answer += 1
-            else:
-                incorrect_answer += 1
-        grade = round(total_marks / db.get_quiz_total_marks(quiz), 2)
+    for qid in response_data:
+        try:
+            question = Question.objects.get(id=int(qid))
+        except Question.DoesNotExists:
+            # there might be other kind of data in response_data we don't care about
+            continue
+        question_type = QUESTION_TYPE[question.question_type]
+        marks = question_type.get_marks(question, extract_response(response_data, qid))
+        total_marks += marks
+        if marks > 0:
+            correct_answer += 1
+        else:
+            incorrect_answer += 1
+    grade = round(total_marks / db.get_quiz_total_marks(quiz), 2)
+    unanswered = total_number - (correct_answer + incorrect_answer)
+    if quiz.quizsettings.showAnswersAfterAttempt:
         return dict(total_grade=grade, correct=correct_answer, incorrect=incorrect_answer, unanswered=unanswered, total_questions=total_number)
     return dict(total_grade='Shown after exam ends', unanswered=unanswered, total_questions=total_number)
 
