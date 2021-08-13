@@ -125,6 +125,7 @@
 					TOP_MESSAGE.css('visibility', 'visible');
 					TOP_MESSAGE.html(message);
 					TOP_MESSAGE.addClass('jello');
+					setTimeout(() => { TOP_MESSAGE.css('visibility', 'hidden')}, 5000);
 				}
 				
 				//Check if there is replace_content request
