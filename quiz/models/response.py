@@ -20,7 +20,9 @@ class Response(models.Model):
         response = json.loads(self.response)
         if response == '' or type(response) != dict:
             response = {}
-        response[qid] = newResponse
+        responseList = response.get(qid,[])
+        responseList.append(newResponse)
+        response[qid] = responseList
         self.response = json.dumps(response)
         self.save()
 
