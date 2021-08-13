@@ -16,6 +16,25 @@ function initialize_quiz() {
 
 function len(obj) { return Object.keys(obj).length; }
 
+var setTimeForQuestion = (qid) => {
+	var question_timer = document.querySelector(`.question-timer[target="${qid}"]`);
+	var question_rem_time = question_time_limits[qid];
+	if (question_rem_time == -1)
+		question_timer.innerHTML = 'No time limit';
+	else {
+		question_timer.innerHTML = question_rem_time
+		var question_time_interval = setInterval(() => {
+			question_rem_time = question_rem_time - 1;
+			if(question_rem_time<0){
+				clearInterval(question_time_interval);
+				save_and_next(qid);
+				return;
+			}
+			question_timer.innerHTML = question_rem_time;
+		}, 1000)
+	}
+}
+
 
 function submit() {
 	var ok = confirm("Are you sure you want to submit?");
@@ -114,7 +133,8 @@ function save_and_next(qid){
         jumpToQuestion(question_ids[current_question_index+1]);
     }
     else{
-    	jumpToQuestion(question_ids[0]);
+    	// jumpToQuestion(question_ids[0]);
+		force_submit();
     }
 
     updateAnswerNumberButtons ();
@@ -292,7 +312,7 @@ function send_time_spent_details_ajax(request) {
 // the array contains the function which are called when jumpToQuestion is called. Note that switchQuestionView modifies
 // the current_question_id, hence it is called at last (might be used by previous functions)
 
-jumpToQuestionFunctions = [send_time_spent_details, switchQuestionView];  
+jumpToQuestionFunctions = [send_time_spent_details, switchQuestionView, setTimeForQuestion];  
 
 function jumpToQuestion(qid){
 	//Call each function from jumpToQuestionFunctions array with qid.
