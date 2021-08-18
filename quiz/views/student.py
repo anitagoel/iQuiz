@@ -369,11 +369,17 @@ def get_attempts_detail(request):
         attempt = dict()
         attempt['id'] = response.id
         attempt['submission_time'] = response.submission_time
-        attempt['duration'] = str(
-            round((response.submission_time - response.start_time).total_seconds() // 60)) + " mins"  # minutes
+        attempt['duration'] = get_duration_time(response)
         attempt['grade'] = get_grade(response, quiz)
         attempts.append(attempt)
     return attempts
+
+
+def get_duration_time(response):
+    breakpoint()
+    return str(
+        round((response.submission_time - response.start_time).total_seconds() // 60)) + " mins " \
+            + str(int((response.submission_time - response.start_time).total_seconds() % 60)) + " secs"
 
 
 def get_attempts_details_and_paper(quiz, response_object, get_time_spent=False):
@@ -383,13 +389,11 @@ def get_attempts_details_and_paper(quiz, response_object, get_time_spent=False):
     attempt = get_attempt_stats(quiz, response_object)  # get basic stats and then we will add more data
     attempt['id'] = response_object.id
     attempt['start_time'] = response_object.start_time
-    attempt['duration'] = str(
-        round((response_object.submission_time -
-               response_object.start_time).total_seconds() // 60)) + " minutes"  # minutes
+    attempt['duration'] = get_duration_time(response_object)
     allowed_time = db.get_quiz_settings(quiz).duration
     attempt['allowed_time'] = str(allowed_time) + " minutes" if allowed_time else "Unlimited"
     # Check if the total_grade is calculated or Shown after exam ends
-    if not str(attempt['total_grade']).isalpha():
+    if attempt['showAnswer']:
         # Grade is calculated so convert to percentage
         attempt['total_grade_percent'] = str(attempt['total_grade'] * 100) + "%"
     else:
@@ -438,7 +442,8 @@ def get_grade(response, quiz):
     for qid in response_data:
         question = Question.objects.get(id=int(qid))
         question_type = QUESTION_TYPE[question.question_type]
-        obtained += question_type.get_marks(question, response_data[qid])
+        most_recent_answer = response_data[qid][-1][0] # Selecting answer from Tuple (answer, timestamp)
+        obtained += question_type.get_marks(question, most_recent_answer)
     grade = obtained / total
     return round(grade, 2)  # round the grade to 2 d.p
 
@@ -472,14 +477,16 @@ def get_attempt_stats(quiz, response):
     grade = round(total_marks / db.get_quiz_total_marks(quiz), 2)
     unanswered = total_number - (correct_answer + incorrect_answer)
     if quiz.quizsettings.showAnswersAfterAttempt:
-        return dict(total_grade=grade, correct=correct_answer, incorrect=incorrect_answer, unanswered=unanswered, total_questions=total_number)
-    return dict(total_grade='Shown after exam ends', unanswered=unanswered, total_questions=total_number)
+        # Student allowed to see answer and hence the grade after attending quiz
+        return dict(total_grade=grade, correct=correct_answer, incorrect=incorrect_answer, 
+                    unanswered=unanswered, total_questions=total_number, showAnswer=True)
+    return dict(total_grade='Shown after exam ends', unanswered=unanswered, total_questions=total_number, showAnswer=False)
 
 
 def extract_response(responses, qid):
     qid = str(qid)
     if qid in responses:
-        return responses[qid]
+        return responses[qid][-1][0]
     else:
         return None
 

@@ -21,7 +21,7 @@ class Response(models.Model):
         if response == '' or type(response) != dict:
             response = {}
         responseList = response.get(qid,[])
-        responseList.append(newResponse)
+        responseList.append(( newResponse, timezone.now().timestamp() ))
         response[qid] = responseList
         self.response = json.dumps(response)
         self.save()
