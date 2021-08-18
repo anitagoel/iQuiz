@@ -80,9 +80,9 @@ var answered_question_ids = [];
         </form>
 
         <button id='save-and-next-button' {% if questions_html|length == forloop.counter %}disabled{%endif%} onClick="save_and_next({{qid}})" class="btn btn-info">Save and Next</button>
-        <!-- <button id='mark-for-review-button' onClick="mark_for_review_and_next('{{qid}}')" class="btn btn-dark">Mark For
-            Review &amp; Next
-        </button> -->
+        <button id='mark-for-review-button' onClick="mark_for_review_and_next('{{qid}}')" class="btn btn-dark">
+            Mark For Review
+        </button>
         <button id='clear-response-button' onClick="clear_response('{{qid}}')" class="btn btn-dark">Clear Response
         </button>
         <hr/>
@@ -196,8 +196,9 @@ var answered_question_ids = [];
                     {% for qid in question_ids %}
                     <div class='question-button-grid-item'>
                         <button id='id-question-button-{{qid}}' class='question-button btn-blue-grey unvisited'
-                        onclick='jumpToQuestion({{qid}})'>{{forloop.counter}}
-                    </button>
+                            onclick='jumpToQuestion({{qid}})'>{{forloop.counter}}
+                        </button>
+                    </div>
                 </div>
                 {% endfor %}
             </div>

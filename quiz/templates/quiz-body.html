@@ -79,10 +79,10 @@ var answered_question_ids = [];
             {{question|safe}}
         </form>
 
-        <button id='save-and-next-button' onClick="save_and_next({{qid}})" class="btn btn-info">Save and Next</button>
-        <!-- <button id='mark-for-review-button' onClick="mark_for_review_and_next('{{qid}}')" class="btn btn-dark">Mark For
-            Review &amp; Next
-        </button> -->
+        <button id='save-and-next-button' {% if questions_html|length == forloop.counter %}disabled{%endif%} onClick="save_and_next({{qid}})" class="btn btn-info">Save and Next</button>
+        <button id='mark-for-review-button' onClick="mark_for_review_and_next('{{qid}}')" class="btn btn-dark">
+            Mark For Review
+        </button>
         <button id='clear-response-button' onClick="clear_response('{{qid}}')" class="btn btn-dark">Clear Response
         </button>
         <hr/>

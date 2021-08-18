@@ -22,7 +22,7 @@ if (!$('head #responded-question-paper-css')[0])
 		        <th>Total Question</th>
 		        <td>{{attempt_details.total_questions}}</td>
 		    </tr>
-			{% if attempt_details.correct %}
+			{% if attempt_details.showAnswer %}
 				<tr>
 					<th>Correct Answers</th>
 					<td>{{attempt_details.correct}}</td>

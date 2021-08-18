@@ -376,7 +376,7 @@ def get_attempts_detail(request):
 
 
 def get_duration_time(response):
-    breakpoint()
+    # breakpoint()
     return str(
         round((response.submission_time - response.start_time).total_seconds() // 60)) + " mins " \
             + str(int((response.submission_time - response.start_time).total_seconds() % 60)) + " secs"
@@ -444,7 +444,7 @@ def get_grade(response, quiz):
         question_type = QUESTION_TYPE[question.question_type]
         most_recent_answer = response_data[qid][-1][0] # Selecting answer from Tuple (answer, timestamp)
         obtained += question_type.get_marks(question, most_recent_answer)
-    grade = obtained / total
+    grade = obtained / total * 100 # Todo: Should it be multiplied?
     return round(grade, 2)  # round the grade to 2 d.p
 
 
