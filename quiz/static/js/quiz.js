@@ -28,6 +28,10 @@ var setTimeForQuestion = (qid) => {
 			if(question_rem_time<0){
 				clearInterval(question_time_interval);
 				save_and_next(qid);
+				if(question_ids.indexOf(qid) == (question_ids.length-1)){
+					console.log("Force Submit")
+					force_submit();
+				}
 				return;
 			}
 			question_timer.innerHTML = question_rem_time;
@@ -134,14 +138,13 @@ function save_and_next(qid){
     }
     else{
     	// jumpToQuestion(question_ids[0]);
-		force_submit();
     }
 
     updateAnswerNumberButtons ();
 }
 
 function mark_for_review_and_next(qid){
-	save_and_next(qid);
+	// save_and_next(qid);
 	changeButtonState(qid, "marked");
 	updateAnswerNumberButtons ();
 }
