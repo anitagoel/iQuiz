@@ -29,3 +29,7 @@ class Question(models.Model):
     expected_response = models.TextField(null=True)
     other_data = models.TextField(null=True)
     published = models.BooleanField(default = False, blank=True)
+
+    
+    def __str__(self):
+        return f"{self.question_type}: {self.draft_statement}"

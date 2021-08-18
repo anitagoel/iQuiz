@@ -99,7 +99,7 @@ def resume_quiz(request, previous_attempt):
     question_types = list()
     responses = previous_attempt.get_response()  # get the responses of the student for this attempt
     answered_question_ids = []  # will be used to store the ids of the questions which are already answered
-    question_time_limits = []
+    question_time_limits = {}
 
     for question in questions:
         question_type = QUESTION_TYPE[question.question_type]
@@ -116,9 +116,13 @@ def resume_quiz(request, previous_attempt):
         question_types.append((question.id, question_type.CLASS_NAME))
         questions_statements.append((question.id, question_type.get_statement_html(question)))
         if question.question_time_limit == 0:
-            question_time_limits.append((question.id, -1))
+            question_time_limits[question.id] = -1
         else:
-            question_time_limits.append((question.id, question.question_time_limit))
+            answer = Answer.objects.filter(question=question, response=previous_attempt).first()
+            if answer:
+                question_time_limits[question.id] = question.question_time_limit - answer.time_spent
+            else:
+                question_time_limits[question.id] = question.question_time_limit
     
     context =  {
             'questions_html': questions_html,
@@ -207,8 +211,10 @@ def save_response(request):
         qid_viewing_time = int(qid_viewing_time)
         time_duration = int(float(time_duration))     # get time duration in seconds
         question = Question.objects.get(pk = qid_viewing_time)      # get the question with id qid_viewing_time
-        Answer.add_time_spent(attempt, question, time_duration)
-        return JsonResponse({'success':'true'})
+        if Answer.add_time_spent(attempt, question, time_duration):
+            # Answer.set_answer(attempt, question)
+            return JsonResponse({'success':'true'})
+        return JsonResponse({'success': 'false'})
     
     for qid_string in request.POST:
         # check that the student can only access the question of the quiz they are answering

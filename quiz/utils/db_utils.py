@@ -127,6 +127,8 @@ def get_new_attempt(request):
     """
     quiz, user = get_quiz(request), get_user(request)
     quiz_settings = QuizSettings.objects.get(quiz = quiz)
+    questions = get_published_questions(quiz, random=quiz_settings.randomizeQuestionOrder)  # returns QuerySet of the published questions
+    question_id_list = [ question['id'] for question in questions.values('id') ] # Save the order of questions in db
     if not quiz_settings.maxAttempts:
         # Delete the last attempt and return a new attempt object if maxAttempts isn't set
         last_response = Response.objects.filter(quiz = quiz, user=user)
@@ -139,7 +141,7 @@ def get_new_attempt(request):
             # New attempt cannot be allowed, return False
             return False
     # Create a new Response and return.
-    attempt = Response(quiz = quiz, user = user)
+    attempt = Response(quiz = quiz, user = user, question_ids = question_id_list)
     attempt.set_end_time()
     attempt.save()
 
