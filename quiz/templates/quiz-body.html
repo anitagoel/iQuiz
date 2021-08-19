@@ -1,6 +1,7 @@
 
 {% load markdown_deux_tags %}
 {% load static %}
+{% load template_filters %}
 
 
 {% block head_ext %}
@@ -29,7 +30,7 @@ question_types[{{qid}}] = '{{question_type}}';
 question_ids.push({{qid}});
 {% endfor %}
 
-{% for qid, question_time in question_time_limits %}
+{% for qid, question_time in question_time_limits.items %}
 question_time_limits[{{qid}}] = {{question_time}};
 {% endfor %}
 
@@ -80,9 +81,11 @@ var answered_question_ids = [];
         </form>
 
         <button id='save-and-next-button' {% if questions_html|length == forloop.counter %}disabled{%endif%} onClick="save_and_next({{qid}})" class="btn btn-info">Save and Next</button>
+        {% if question_time_limits|get_item:qid == -1 %}
         <button id='mark-for-review-button' onClick="mark_for_review_and_next('{{qid}}')" class="btn btn-dark">
             Mark For Review
         </button>
+        {% endif %}
         <button id='clear-response-button' onClick="clear_response('{{qid}}')" class="btn btn-dark">Clear Response
         </button>
         <hr/>
@@ -193,13 +196,14 @@ var answered_question_ids = [];
             <div class="card-body">
                 <div id='div-question-buttons-header' class="card-title">Navigate Questions</div>
                 <div id='question-buttons-grid' class="card-text">
-                    {% for qid in question_ids %}
+                    {% for qid, question_time in question_time_limits.items %}
                     <div class='question-button-grid-item'>
-                        <button id='id-question-button-{{qid}}' class='question-button btn-blue-grey unvisited'
-                        onclick='jumpToQuestion({{qid}})'>{{forloop.counter}}
-                    </button>
+                        <button id='id-question-button-{{qid}}' class='question-button {% if question_time > 0 %}question-timed {%endif%}btn-blue-grey unvisited'
+                            {% if not question_time > 0 %}onclick='jumpToQuestion({{qid}})'{%endif%}>{{forloop.counter}}
+                        </button>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </div>
     </div>

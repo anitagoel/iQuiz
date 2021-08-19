@@ -116,12 +116,17 @@ def resume_quiz(request, previous_attempt):
         question_types.append((question.id, question_type.CLASS_NAME))
         questions_statements.append((question.id, question_type.get_statement_html(question)))
         if question.question_time_limit == 0:
+            # Setting time limit as -1 for questions which doesnot have time limit
             question_time_limits[question.id] = -1
         else:
             answer = Answer.objects.filter(question=question, response=previous_attempt).first()
             if answer:
-                question_time_limits[question.id] = question.question_time_limit - answer.time_spent
+                # Calculating time left to answer from the time spent to view the question
+                question_time_left = question.question_time_limit - answer.time_spent
+                question_time_limits[question.id] = question_time_left if question_time_left >=0 else 0
+                # TODO: create a list of answered timed questions to prevent student changing the answer if he answered in less seconds
             else:
+                # Time left is the time set by teacher
                 question_time_limits[question.id] = question.question_time_limit
     
     context =  {

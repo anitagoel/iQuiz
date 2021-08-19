@@ -10,32 +10,64 @@ function initialize_quiz() {
 	updateAnswerNumberButtons ();
 	
 	$("#questions-slider-nav").on('input', function () {
-		jumpToQuestion(question_ids[this.value-1]);
+		let index = this.value-1;
+		console.log('Is the jumping question non timed: ',question_time_limits[question_ids[index]] === -1)
+		if (question_time_limits[question_ids[index]] === -1){
+			jumpToQuestion(question_ids[index]);
+		}else{
+			alert("Cannot jump to timed questions!");
+			this.value = current_question_index+1;
+		}
 	});
 }
 
 function len(obj) { return Object.keys(obj).length; }
 
+let time_intervals = {};
+let not_viewable = [];
+
+function removeTimeInterval(qid) {
+	for (const [qid, interval] of Object.entries(time_intervals)) {
+		console.log(`${qid} Interval removed: ${interval}`);
+		clearInterval(interval);
+		not_viewable.push(Number(qid));
+		$(`#id-question-button-${qid}`).css('text-decoration', 'line-through');
+		$(`#id-question-button-${qid}`).css('opacity', '0.6');
+		setTimeout(()=> {
+			document.querySelector(`#div-${qid}`).querySelectorAll('input').forEach(node => node.setAttribute('disabled', true))
+		}, 2000) // Setting disabled without timeout doesnot send answer to backend
+	  }
+	time_intervals = {}; // Emptying time intervals object after clearing all timeInterval
+}
+
 var setTimeForQuestion = (qid) => {
-	var question_timer = document.querySelector(`.question-timer[target="${qid}"]`);
-	var question_rem_time = question_time_limits[qid];
-	if (question_rem_time == -1)
+	let question_timer = document.querySelector(`.question-timer[target="${qid}"]`);
+	let question_time_interval=null;
+	let question_rem_time = question_time_limits[qid];
+	if (question_rem_time === -1)
 		question_timer.innerHTML = 'No time limit';
 	else {
-		question_timer.innerHTML = question_rem_time
-		var question_time_interval = setInterval(() => {
-			question_rem_time = question_rem_time - 1;
-			if(question_rem_time<0){
-				clearInterval(question_time_interval);
-				save_and_next(qid);
-				if(question_ids.indexOf(qid) == (question_ids.length-1)){
-					console.log("Force Submit")
-					force_submit();
+		// Question has a time limit
+		console.log("Qid in not_viewable", not_viewable.includes(qid), qid, not_viewable)
+		if (not_viewable.includes(qid)){
+			// Timed question which already had a time interval removed and answer saved
+			// console.log("Question in not viewable")
+			question_timer.innerHTML = 0;
+		} else {
+			question_timer.innerHTML = question_rem_time
+			question_time_interval = setInterval(() => {
+				if(question_rem_time===0){
+					removeTimeInterval(qid);
+					save_and_next(qid);
+					return;
 				}
-				return;
-			}
-			question_timer.innerHTML = question_rem_time;
-		}, 1000)
+				question_rem_time = question_rem_time - 1;
+				question_time_limits[qid] = question_rem_time; // Update time in time limit object
+				question_timer.innerHTML = question_rem_time;
+			}, 1000);
+			// Add the time interval in object for clearing later
+			time_intervals[qid] = question_time_interval;
+		}
 	}
 }
 
@@ -138,6 +170,10 @@ function save_and_next(qid){
     }
     else{
     	// jumpToQuestion(question_ids[0]);
+		if(qid === question_ids[question_ids.length-1]){
+			console.log("Force Submit")
+			// force_submit();
+		}
     }
 
     updateAnswerNumberButtons ();
@@ -282,7 +318,7 @@ function send_time_spent_details(qid){
 			return; // Ignore if less than 1 second TODO: Was it right thing to do? Should we create a dictionary to store the time locally and send when its beyond a fixed time?
 		}
 		request = [question_id_with_tag, {"viewing-time-qid": current_question_id, "viewing-time-duration": diff}]; 
-		saveResponseAjax(request);
+		setTimeout(() => {saveResponseAjax(request)}, 1000); // Since backend could not get the saved response immediately for processing
 		//Now change the current_section_start_time to now!
 		current_section_start_time = Date.now();
 	}
@@ -315,7 +351,7 @@ function send_time_spent_details_ajax(request) {
 // the array contains the function which are called when jumpToQuestion is called. Note that switchQuestionView modifies
 // the current_question_id, hence it is called at last (might be used by previous functions)
 
-jumpToQuestionFunctions = [send_time_spent_details, switchQuestionView, setTimeForQuestion];  
+jumpToQuestionFunctions = [send_time_spent_details, removeTimeInterval, switchQuestionView, setTimeForQuestion];  
 
 function jumpToQuestion(qid){
 	//Call each function from jumpToQuestionFunctions array with qid.
@@ -380,3 +416,10 @@ function timer_update() {
     force_submit();
   }
 }
+
+$(window).on('beforeunload', () => {
+	let current_question_time_limit = question_time_limits[current_question_id];
+	send_time_spent_details(current_question_id, current_question_time_limit == -1?null:current_question_time_limit);
+	console.log("time of ", current_question_time_limit);
+	return true;
+})
