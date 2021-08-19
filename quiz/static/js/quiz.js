@@ -108,19 +108,25 @@ function changeButtonState(qid, state){
 		case exclusiveQuestionButtonState[0]:
 			$('#id-question-button-'+ qid).addClass('btn-blue-grey').addClass('unvisited');
 			break;
-		case exclusiveQuestionButtonState[1]: //Transition from 
-			$('#id-question-button-'+ qid).removeClass('btn-blue-grey').removeClass('unvisited').addClass('btn-danger').addClass('not-answered');
+		case exclusiveQuestionButtonState[1]: //Transition to Not answered (Clear response)
+			$('#id-question-button-'+ qid).removeClass('btn-blue-grey').removeClass('unvisited') // Remove unvisited
+			.removeClass('btn-success').removeClass('answered') // remove answered
+			.removeClass('btn-info').removeClass('marked') // remove marked
+			.addClass('btn-danger').addClass('not-answered'); // add not answered
 			break;
-		case exclusiveQuestionButtonState[2]:
-			$('#id-question-button-'+ qid).removeClass('btn-info').removeClass('marked').removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
+		case exclusiveQuestionButtonState[2]: // Answered and marked review will show like marked
+			// $('#id-question-button-'+ qid).removeClass('btn-info').removeClass('marked').removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
+			$('#id-question-button-'+ qid).removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
 			$('#id-question-button-'+ qid).addClass('btn-success').addClass('answered');
 			break; //Add answered classes
 		case exclusiveQuestionButtonState[3]:
-			$('#id-question-button-'+ qid).removeClass('btn-success').removeClass('answered').removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
+			// $('#id-question-button-'+ qid).removeClass('btn-success').removeClass('answered').removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
+			$('#id-question-button-'+ qid).removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
 			$('#id-question-button-'+ qid).addClass('btn-info').addClass('marked');
 			break;
 	}
 }
+
 
 function updateAnswerNumberButtons () {
 	//Function to update the number of unvisited, answered, not-answered and marked questions.
