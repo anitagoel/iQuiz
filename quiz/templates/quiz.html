@@ -75,12 +75,12 @@ var answered_question_ids = [];
 
     {% for qid, question in questions_html %}
     <div id='div-question-{{qid}}' class='question hidden-question'>
-        <div>Time left to attend this question is: <span target="{{qid}}" class="question-timer"></span></div>
+        <div class="m-2"><p class="border border-warning p-2">Time left to attend this question is: <span style="font-weight: bold;" target="{{qid}}" class="question-timer text-bold"></span></p></div>
         <form id='form-question-{{qid}}' class="form-horizontal" method="POST" class="post-form">
             {{question|safe}}
         </form>
 
-        <button id='save-and-next-button' {% if questions_html|length == forloop.counter %}disabled{%endif%} onClick="save_and_next({{qid}})" class="btn btn-info">Save and Next</button>
+        <button id='save-and-next-button' onClick="save_and_next({{qid}})" class="btn btn-info">{% if questions_html|length == forloop.counter %}Save{% else %}Save and Next{% endif %}</button>
         {% if question_time_limits|get_item:qid == -1 %}
         <button id='mark-for-review-button' onClick="mark_for_review_and_next('{{qid}}')" class="btn btn-dark">
             Mark For Review

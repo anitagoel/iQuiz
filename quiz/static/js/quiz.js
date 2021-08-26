@@ -1,5 +1,6 @@
 
 var current_section_start_time = null;   //used by sending time spent on a question to server
+let saved_questions = [];
 
 function initialize_quiz() { 
 	jumpToQuestion(question_ids[current_question_index]); //Jump to the first question
@@ -11,7 +12,7 @@ function initialize_quiz() {
 	
 	$("#questions-slider-nav").on('input', function () {
 		let index = this.value-1;
-		console.log('Is the jumping question non timed: ',question_time_limits[question_ids[index]] === -1)
+		// console.log('Is the jumping question non timed: ',question_time_limits[question_ids[index]] === -1)
 		if (question_time_limits[question_ids[index]] === -1){
 			jumpToQuestion(question_ids[index]);
 		}else{
@@ -28,7 +29,6 @@ let not_viewable = [];
 
 function removeTimeInterval(qid) {
 	for (const [qid, interval] of Object.entries(time_intervals)) {
-		console.log(`${qid} Interval removed: ${interval}`);
 		clearInterval(interval);
 		not_viewable.push(Number(qid));
 		$(`#id-question-button-${qid}`).css('text-decoration', 'line-through');
@@ -48,7 +48,7 @@ var setTimeForQuestion = (qid) => {
 		question_timer.innerHTML = 'No time limit';
 	else {
 		// Question has a time limit
-		console.log("Qid in not_viewable", not_viewable.includes(qid), qid, not_viewable)
+		// console.log("Question not viewable", not_viewable.includes(qid), qid, not_viewable)
 		if (not_viewable.includes(qid)){
 			// Timed question which already had a time interval removed and answer saved
 			// console.log("Question in not viewable")
@@ -58,7 +58,9 @@ var setTimeForQuestion = (qid) => {
 			question_time_interval = setInterval(() => {
 				if(question_rem_time===0){
 					removeTimeInterval(qid);
-					save_and_next(qid);
+					clearInterval(question_time_interval);
+					console.log("The index of ",qid, saved_questions.indexOf(qid))
+					if(saved_questions.indexOf(qid) === -1) save_and_next(qid);
 					return;
 				}
 				question_rem_time = question_rem_time - 1;
@@ -160,6 +162,7 @@ function validate_data(data, qid){
 function save_and_next(qid){
 	//Mark as visited
 	current_question_index = question_ids.indexOf(qid);
+	saved_questions.push(question_ids[current_question_index]);
 	//Perform following only if the form is actually filled/question is answered
 	var form = $('#form-question-' + qid);
 	//validate that required fields are there before sending the response
@@ -426,6 +429,6 @@ function timer_update() {
 $(window).on('beforeunload', () => {
 	let current_question_time_limit = question_time_limits[current_question_id];
 	send_time_spent_details(current_question_id, current_question_time_limit == -1?null:current_question_time_limit);
-	console.log("time of ", current_question_time_limit);
+	// console.log("time of ", current_question_time_limit);
 	return true;
 })
