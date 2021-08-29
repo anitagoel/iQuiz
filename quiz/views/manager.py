@@ -273,6 +273,9 @@ def grades(request):
         'total_pages_num_list': range(total_pages_num), 
         'current_page_num' : page_num+1,
         'per_page' : per_page,
+        'quiz_id': quiz.id,
+        # 'download_allowed': True,
+        # 'view_download_allowed': True,
         }
     context['full'] = request.POST.get(JSON_REQUEST, False)
     
@@ -325,9 +328,16 @@ def get_attempt_detail(response, quiz):
     attempt['id'] = response.id
     attempt['student'] = str(response.user)
     attempt['submission_time'] = response.submission_time
-    attempt['duration'] = str(round((response.submission_time - response.start_time).total_seconds()//60)) + " mins" #minutes
+    attempt['duration'] = get_duration_time(response)
     attempt['grade'] = get_grade(response, quiz)
     return attempt
+
+
+def get_duration_time(response):
+    # breakpoint()
+    return str(
+        round((response.submission_time - response.start_time).total_seconds() // 60)) + " mins " \
+            + str(int((response.submission_time - response.start_time).total_seconds() % 60)) + " secs"
 
 
 @validate_manager
@@ -366,6 +376,7 @@ def get_grade(response, quiz):
     for qid in response_data:
         question = Question.objects.get(id=int(qid))
         question_type = QUESTION_TYPE[question.question_type]
-        obtained += question_type.get_marks(question, response_data[qid])
-    grade = obtained/total
+        most_recent_answer = response_data[qid][-1][0] # Selecting answer from Tuple (answer, timestamp)
+        obtained += question_type.get_marks(question, most_recent_answer)
+    grade = obtained/total * 100
     return round(grade, 2)  # round the grade to 2 d.p
