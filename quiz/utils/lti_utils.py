@@ -4,6 +4,7 @@ The file provides various functions for dealing with LTI requests
 import re
 
 RESOURCE_LINK_ID = "resource_link_id"
+RESOURCE_LINK_TITLE = 'resource_link_title'
 CONTEXT_TITLE = "context_title"
 CONTEXT_ID = "context_id"
 CONTEXT_LABEL = "context_label"
@@ -12,7 +13,8 @@ QUIZ_NAME = "custom_component_display_name"  # optionally provided by Open EdX
 
 USER_ID = "user_id"
 USER_EMAIL = "lis_person_contact_email_primary"
-USER_NAME = "lis_person_sourcedid"
+# USER_NAME = "lis_person_sourcedid"
+USER_NAME = 'lis_person_name_full'
 
 RESULT_SOURCE_ID = "lis_result_sourcedid"
 OUTCOME_SERVICE_URL = 'lis_outcome_service_url'
@@ -23,6 +25,7 @@ STUDENT_ROLES = ["learner", "student"]
 
 params_to_save = [
     RESOURCE_LINK_ID, 
+    RESOURCE_LINK_TITLE,
     CONTEXT_TITLE, 
     CONTEXT_ID, 
     CONTEXT_LABEL, 
@@ -91,6 +94,14 @@ def get_resource_link_id(request):
         return re.search(link_pattern, link).group()
 
 
+def get_context_title(request):
+    if CONTEXT_TITLE in request.POST:
+        return request.POST[CONTEXT_TITLE]
+
+    if CONTEXT_TITLE in request.session:
+        return request.session[CONTEXT_TITLE]
+
+
 def get_context_id(request):
     if CONTEXT_ID in request.POST:
         return request.POST[CONTEXT_ID]
@@ -117,6 +128,8 @@ def get_context_label(request):
 def get_quiz_name(request):
     if QUIZ_NAME in request.session:
         return request.session[QUIZ_NAME]
+    elif RESOURCE_LINK_TITLE in request.session:
+        return request.session[RESOURCE_LINK_TITLE]
     return ''
 
 

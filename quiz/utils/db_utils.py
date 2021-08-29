@@ -54,8 +54,10 @@ def create_new_quiz(request):
     """
     quiz = Quiz() #New Quiz is created
     quiz.resourceLinkId = lti.get_resource_link_id(request)
+    quiz.contextTitle = lti.get_context_title(request)
     quiz.consumer_key = lti.get_oauth_consumer_key(request)
     quiz.contextId = lti.get_context_id(request)
+    quiz.quizName = lti.get_quiz_name(request)
     quiz.save() #Save the Quiz
     quizSettings = QuizSettings(quiz = quiz)
     quizSettings.save()
@@ -129,6 +131,7 @@ def get_new_attempt(request):
     quiz_settings = QuizSettings.objects.get(quiz = quiz)
     questions = get_published_questions(quiz, random=quiz_settings.randomizeQuestionOrder)  # returns QuerySet of the published questions
     question_id_list = [ question['id'] for question in questions.values('id') ] # Save the order of questions in db
+    used_attempt_number = None
     if not quiz_settings.maxAttempts:
         # Delete the last attempt and return a new attempt object if maxAttempts isn't set
         last_response = Response.objects.filter(quiz = quiz, user=user)
@@ -141,7 +144,7 @@ def get_new_attempt(request):
             # New attempt cannot be allowed, return False
             return False
     # Create a new Response and return.
-    attempt = Response(quiz = quiz, user = user, question_ids = question_id_list)
+    attempt = Response(quiz = quiz, user = user, question_ids = question_id_list, attempt_number=used_attempt_number+1 if used_attempt_number is not None else None)
     attempt.set_end_time()
     attempt.save()
 

@@ -17,6 +17,7 @@ class Quiz(models.Model):
         max_length=200,
         help_text="Context Id: Unique for each term (run) of the course"
     )
+    contextTitle = models.CharField(max_length=100, help_text="Course Name of the quiz in the platform")
     createdOn = models.DateTimeField(default=datetime.datetime.utcnow)
     updatedOn = models.DateTimeField(auto_now=True)
     quizName = models.CharField(max_length=100, blank=True)
