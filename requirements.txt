@@ -28,3 +28,4 @@ django-heroku
 whitenoise
 psycopg2
 dj_database_url
+xlwt

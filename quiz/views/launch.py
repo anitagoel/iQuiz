@@ -5,6 +5,7 @@ from quiz.utils import lti
 import quiz.utils.lti_validator as lti_validator
 from . import manager
 from . import student
+from . import download_data
 
 
 @csrf_exempt

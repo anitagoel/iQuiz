@@ -274,7 +274,8 @@ def grades(request):
         'current_page_num' : page_num+1,
         'per_page' : per_page,
         'quiz_id': quiz.id,
-        # 'download_allowed': True,
+        'excel_data_download': quiz.isEverAttempted, # Download excel data option
+        # 'download_allowed': True, # PDF file of student response
         # 'view_download_allowed': True,
         }
     context['full'] = request.POST.get(JSON_REQUEST, False)

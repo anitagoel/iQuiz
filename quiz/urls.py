@@ -12,6 +12,7 @@ urlpatterns = [
         path('edit', views.manager.edit, name='edit'),
         path('home', views.manager.home, name='home'),
         path('grades', views.manager.grades, name='grades'),
+        path('download/excel', views.download_data.download_excel_data),
         path('edit_question', views.manager.edit_question, name='edit_question'),
         path('add_question', views.manager.add_question, name="add_question"),
         path('publish', views.manager.publish, name="publish"),

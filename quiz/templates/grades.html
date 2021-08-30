@@ -27,7 +27,13 @@
     {% for page_num in total_pages_num_list %}
     <button class="btn btn-primary buttons-page-num" style="min-width: 30px; max-width: 50px;" onClick="replace_content('grades', {page_num:{{page_num}} })">{{forloop.counter}}
     </button>
-    <div>Download response data:<a class="btn btn-sm btn-outline-info" href="/download/{{quiz_id}}" target="_blank"><i class="fa fa-download"></i></a></div>
+    {% if excel_data_download %}
+    <div>
+        Download response data:<a class="btn btn-sm btn-outline-info" href="/download/excel" target="_blank">
+            <i class="fa fa-download"></i>
+        </a>
+    </div>
+    {% endif %}
     {% endfor %}
 </div>
 <div class="table-responsive">
