@@ -188,9 +188,14 @@ function save_and_next(qid){
     updateAnswerNumberButtons ();
 }
 
-function mark_for_review_and_next(qid){
+function mark_for_review_and_next(btnobj, qid){
 	// save_and_next(qid);
 	changeButtonState(qid, "marked");
+	$(btnobj).toggleClass('btn-dark text-dark');
+	if ($(btnobj).text() == "Mark For Review")
+       $(btnobj).text("Marked For Review")
+    else
+       $(btnobj).text("Mark For Review");
 	updateAnswerNumberButtons ();
 }
 
@@ -429,6 +434,4 @@ function timer_update() {
 $(window).on('beforeunload', () => {
 	let current_question_time_limit = question_time_limits[current_question_id];
 	send_time_spent_details(current_question_id, current_question_time_limit == -1?null:current_question_time_limit);
-	// console.log("time of ", current_question_time_limit);
-	return true;
 })
