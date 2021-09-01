@@ -275,8 +275,8 @@ def grades(request):
         'per_page' : per_page,
         'quiz_id': quiz.id,
         'excel_data_download': quiz.isEverAttempted, # Download excel data option
-        # 'download_allowed': True, # PDF file of student response
-        # 'view_download_allowed': True,
+        'download_allowed': True, # PDF file of student response
+        'view_download_allowed': True,
         }
     context['full'] = request.POST.get(JSON_REQUEST, False)
     
@@ -377,7 +377,7 @@ def get_grade(response, quiz):
     for qid in response_data:
         question = Question.objects.get(id=int(qid))
         question_type = QUESTION_TYPE[question.question_type]
-        most_recent_answer = response_data[qid][-1][0] # Selecting answer from Tuple (answer, timestamp)
+        most_recent_answer = student.extract_response(response_data, qid) # Selecting answer from Tuple (answer, timestamp)
         obtained += question_type.get_marks(question, most_recent_answer)
     grade = obtained/total * 100
     return round(grade, 2)  # round the grade to 2 d.p

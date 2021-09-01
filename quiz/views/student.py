@@ -453,7 +453,7 @@ def get_grade(response, quiz):
     for qid in response_data:
         question = Question.objects.get(id=int(qid))
         question_type = QUESTION_TYPE[question.question_type]
-        most_recent_answer = response_data[qid][-1][0] # Selecting answer from Tuple (answer, timestamp)
+        most_recent_answer = extract_response(response_data, qid) # Selecting answer from Tuple (answer, timestamp)
         obtained += question_type.get_marks(question, most_recent_answer)
     grade = obtained / total * 100 # Todo: Should it be multiplied?
     return round(grade, 2)  # round the grade to 2 d.p
@@ -496,7 +496,7 @@ def get_attempt_stats(quiz, response):
 
 def extract_response(responses, qid):
     qid = str(qid)
-    if qid in responses:
+    if qid in responses and len(responses[qid]) > 0:
         return responses[qid][-1][0]
     else:
         return None

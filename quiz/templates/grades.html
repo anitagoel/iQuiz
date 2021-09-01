@@ -29,7 +29,7 @@
     </button>
     {% if excel_data_download %}
     <div>
-        Download response data:<a class="btn btn-sm btn-outline-info" href="/download/excel" target="_blank">
+        Download response data:<a class="btn btn-sm btn-outline-info" href="/download/grade/excel" target="_blank">
             <i class="fa fa-download"></i>
         </a>
     </div>
@@ -61,7 +61,7 @@
             </td>
             {% if view_download_allowed %}
             <td>
-                <button onClick='download_attempt({{attempt.id}})' class='btn btn-info'>Download Response</button>
+                <a href='download/report/excel/{{attempt.id}}' class='btn btn-info'>Download Response</a>
             </td>
             {% endif %}
             <td>{{attempt.submission_time}}</td>
