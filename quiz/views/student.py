@@ -116,7 +116,7 @@ def resume_quiz(request, previous_attempt):
             answered_question_ids.append(question.id)  # mark the question as answered by adding its id to list
         else:
             html = question_type.get_student_view_html(question)  # Add the HTML form field input for the question
-        questions_html.append((question.id, html))
+        questions_html.append((question.id, html, question.question_weight))
         question_ids.append(question.id)
         question_types.append((question.id, question_type.CLASS_NAME))
         questions_statements.append((question.id, question_type.get_statement_html(question)))

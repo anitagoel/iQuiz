@@ -79,10 +79,14 @@ var answered_question_ids = [];
         <span class="thumb"></span>
     </div>
 
-    {% for qid, question in questions_html %}
+    {% for qid, question, question_weight questions_html %}
     <div id='div-question-{{qid}}' class='question hidden-question'>
-        <div class="m-2"><p class="badge badge-secondary p-2">Time left to attend this question is: <span style="font-weight: bold;font-style: italic;" target="{{qid}}" class="question-timer text-bold"></span></p></div>
+        <div class="m-2 d-flex justify-content-between">
+            <p class="badge badge-secondary p-2">Time left to attend this question is: <span style="font-weight: bold;font-style: italic;" target="{{qid}}" class="question-timer text-bold"></span></p>
+            <p class="badge badge-info p-2">Question weightage: {{question_weight}}</p>
+        </div>
         <form id='form-question-{{qid}}' class="form-horizontal" method="POST" class="post-form">
+            <p>Q.No: {{forloop.counter}}</p>
             {{question|safe}}
         </form>
 
