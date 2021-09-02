@@ -111,8 +111,8 @@
             {% else %}
             <li><p>There is <strong>NO</strong> time limit on this quiz. </p></li>
             {% endif %}
-            {% if max_attempts %}
-                <li><p>The maximum number of allowed attempt for this quiz is <strong>{{max_attempt}}</strong>.</p></li>
+            {% if max_attempts > 0 %}
+                <li><p>The maximum number of allowed attempt for this quiz is <strong>{{max_attempts}}</strong>.</p></li>
             {% else %}
                 <li><p>There is <strong>NO</strong> limit on the number of attempts. Note that only your latest attempt responses are saved in the database in this case. <strong>If you again attempt the quiz, your last attempt is lost!</strong>.
                 </p></li>

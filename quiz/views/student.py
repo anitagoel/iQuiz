@@ -44,6 +44,10 @@ def home(request, message=None):
         total_questions_number = questions.count()
         max_attempts = quiz_settings.maxAttempts
         duration = quiz_settings.duration
+        quiz_not_allowed = False
+        if max_attempts > 0:
+            if len(attempts) >= max_attempts:
+                quiz_not_allowed = True
 
         # Check if the student has attempt left or not, if the handle is not None, then
         # we need to return the handle itself.
@@ -54,6 +58,7 @@ def home(request, message=None):
         if quiz and quiz.published:
             return render(request, 'student.html', {
                 'attempts': attempts, 
+                'quiz_not_allowed': quiz_not_allowed,
                 'information': information,
                 'max_attempts' : max_attempts,
                 'total_questions_number' : total_questions_number,
