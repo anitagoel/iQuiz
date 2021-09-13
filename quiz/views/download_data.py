@@ -75,6 +75,9 @@ def download_grade_data(request):
             if answer_object:
                 time_spent = answer_object.time_spent
 
+            for data in student_response:
+                data[1] = datetime.fromtimestamp(data[1]).strftime('%d-%m-%Y %H:%M:%S')
+
             ws.write(row_num, 0, response_obj.user.name, font_style)
             ws.write(row_num, 1, question.question_type, font_style)
             ws.write(row_num, 2, f'{quiz.contextTitle} > {quiz.quizName} > {question.question_type}', font_style)
@@ -141,11 +144,13 @@ def download_report_data(request, attempt_id):
                 time_spent = answer_object.time_spent
             expected_response = question.expected_response # It is the option expected from student
             student_response = response_json[question_id] # List of tuples
+            for data in student_response:
+                data[1] = datetime.fromtimestamp(data[1]).strftime('%d-%m-%Y %H:%M:%S')
             most_recent_response_and_timestamp = ('Unanswered', 0) # Response if unanswered
             if len(student_response) > 0:
                 most_recent_response_and_timestamp = student_response[-1]
                 chosen_response = most_recent_response_and_timestamp[0] # Chosen option
-                answer_submission_time = datetime.fromtimestamp(most_recent_response_and_timestamp[1]).strftime('%d-%m-%Y %H:%M:%S')
+                answer_submission_time = most_recent_response_and_timestamp[1]
             else:
                 chosen_response = None
                 chosen_answer = None # Since not answered, answer is None
