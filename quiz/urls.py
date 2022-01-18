@@ -25,6 +25,8 @@ urlpatterns = [
         path('attempt_details', views.student.attempt_details, name="attempt_details"),
         path('attempt_analytics', views.student.attempt_analytics, name="attempt_analytics"),
         path('analytics_page', views.student.analytics_page, name="analytics_page"),
+
+        path('questionattemptstart', views.student.startattempt, name="start_question_attempt"),
         ]
 
 if settings.DEBUG:

@@ -5,17 +5,7 @@ from quiz.utils.decorators import *
 from datetime import datetime
 
 
-def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
-
-
 def download_grade_data(request):
-    
     quiz = db.get_quiz(request)
     student_responses = db.get_students_responses(request)
     questions = list(db.get_questions_by_quiz(quiz).values())
@@ -31,11 +21,8 @@ def download_grade_data(request):
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    columns = ['Username/ID', 'Title', 'Location', 'Question', 'Question Difficulty', 'Chosen Option', 'Chosen Answer', 'Expected Answer', 'Correct/Incorrect', 'Answer Submission Time', 'Answer Attempts', 'Time Spent (secs)', 'Score Possible', 'Score Earned', 'State', 'IP Address']
+    columns = ['Username/ID', 'Title', 'Location', 'Question', 'Question Difficulty', 'Chosen Option', 'Chosen Answer', 'Expected Answer', 'Correct/Incorrect', 'Answer Submission Time', 'Answer Attempts', 'Start Time', 'Time Spent (secs)', 'Score Possible', 'Score Earned', 'State', 'IP Address']
 
-    # if quiz.maxAttempts is not None:
-    #     columns.append('Attempts')
-    #     ws.write(row_num, 9, )
     for col_num in range(len(columns)):
         ws.write(row_num, col_num, columns[col_num], font_style)
 
@@ -44,6 +31,7 @@ def download_grade_data(request):
 
     for response_obj in student_responses:
         response_json = json.loads(response_obj.response)
+        questions_started = response_obj.questions_start_time
         for question in response_obj.question_ids:
             response_json.setdefault(str(question), [])
         for question_id in response_json:
@@ -71,6 +59,10 @@ def download_grade_data(request):
                 if question.question_type == 'SAQ':
                     correct_incorrect = 'Answered' if student_response[-1][0] != '' else 'Unanswered'
             answer_object = question.answer_set.filter(response=response_obj).first()
+            question_start_time = questions_started.get(question_id, 'Not Recorded')
+            if question_start_time != 'Not Recorded':
+                print(question_start_time)
+                question_start_time = datetime.fromtimestamp(int(question_start_time)).strftime('%d-%m-%Y %H:%M:%S')
             time_spent = 0
             if answer_object:
                 time_spent = answer_object.time_spent
@@ -90,13 +82,12 @@ def download_grade_data(request):
             ws.write(row_num, 8, correct_incorrect, font_style)
             ws.write(row_num, 9, answer_submission_time, font_style)
             ws.write(row_num, 10, len(student_response))
-            ws.write(row_num, 11, time_spent)
-            ws.write(row_num, 12, question.question_weight)
-            ws.write(row_num, 13, question.question_weight if chosen_answer == expected_answer else 0)
-            ws.write(row_num, 14, json.dumps(student_response))
-            ws.write(row_num, 15, get_client_ip(request))
-
-
+            ws.write(row_num, 11, question_start_time, font_style)
+            ws.write(row_num, 12, time_spent)
+            ws.write(row_num, 13, question.question_weight)
+            ws.write(row_num, 14, question.question_weight if chosen_answer == expected_answer else 0)
+            ws.write(row_num, 15, json.dumps(student_response))
+            ws.write(row_num, 16, response_obj.ip_address)
     wb.save(response)
     return response
 
