@@ -11,6 +11,8 @@ class Response(models.Model):
     question_ids = models.JSONField(default=list, help_text="Stores the order of questions to be shown to student")
     attempt_number = models.IntegerField(null=True)
     response = models.TextField(blank = True, default = '{}') #Initialize the response as empty dictionary
+    questions_start_time = models.JSONField(default=dict, help_text="Stores the start time of each question")
+    ip_address = models.CharField(max_length=50, default="0.0.0.0")
     start_time = models.DateTimeField(default = datetime.datetime.utcnow)
     end_time = models.DateTimeField(null=True)
     submission_time = models.DateTimeField(null=True)

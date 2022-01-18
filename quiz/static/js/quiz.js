@@ -365,13 +365,25 @@ function send_time_spent_details_ajax(request) {
 // the array contains the function which are called when jumpToQuestion is called. Note that switchQuestionView modifies
 // the current_question_id, hence it is called at last (might be used by previous functions)
 
-jumpToQuestionFunctions = [send_time_spent_details, removeTimeInterval, switchQuestionView, setTimeForQuestion];  
+jumpToQuestionFunctions = [sendQuestionStartTime, send_time_spent_details, removeTimeInterval, switchQuestionView, setTimeForQuestion];  
 
 function jumpToQuestion(qid){
 	//Call each function from jumpToQuestionFunctions array with qid.
 	for (index in jumpToQuestionFunctions){
 		jumpToQuestionFunctions[index](qid);
 	}
+}
+
+
+function sendQuestionStartTime(qid) {
+	if (current_section_start_time == null){
+		current_section_start_time = Date.now();
+	}
+	$.ajax({
+		type: "POST",
+		url: "questionattemptstart",
+		data: {qid}
+	})
 }
 
 

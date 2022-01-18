@@ -146,6 +146,7 @@ def get_new_attempt(request):
     # Create a new Response and return.
     attempt = Response(quiz = quiz, user = user, question_ids = question_id_list, attempt_number=used_attempt_number+1 if used_attempt_number is not None else None)
     attempt.set_end_time()
+    attempt.ip_address = get_ip(request)
     attempt.save()
 
     # set isEverAttempted variable of Quiz to be True if not already
@@ -198,3 +199,12 @@ def get_managers(quiz):
     """
     managers = QuizManager.objects.filter(quiz=quiz)
     return managers
+
+
+def get_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip

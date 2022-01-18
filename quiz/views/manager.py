@@ -265,7 +265,7 @@ def grades(request):
     total_responses_count = responses.count()
     total_pages_num = math.ceil(total_responses_count/per_page)
     final_responses = responses[page_num*per_page: (page_num+1)*per_page]
-    attempts = [get_attempt_detail(response, quiz) for response in responses]
+    attempts = [get_attempt_detail(response, quiz) for response in final_responses]
 
     template = loader.get_template('grades.html')
     context =  {'attempts': attempts, 

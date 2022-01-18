@@ -45,7 +45,7 @@ def home(request, message=None):
         max_attempts = quiz_settings.maxAttempts
         duration = quiz_settings.duration
         quiz_not_allowed = False
-        if max_attempts > 0:
+        if max_attempts != None:
             if len(attempts) >= max_attempts:
                 quiz_not_allowed = True
 
@@ -598,3 +598,14 @@ def analytics_page(request):
 
 def get_average_time_spent_for_all_attempt(quiz):
     return 0
+
+
+@csrf_exempt
+def startattempt(request):
+    response = db.get_previous_attempt(request)
+    question_id = request.POST.get('qid')
+    question_started = response.questions_start_time.get(question_id, False)
+    if question_started == False:
+        response.questions_start_time.update({ question_id: datetime.datetime.utcnow().timestamp() })
+        response.save()
+    return JsonResponse({'success': True})
