@@ -601,11 +601,12 @@ def get_average_time_spent_for_all_attempt(quiz):
 
 
 @csrf_exempt
-def startattempt(request):
+def questionVisitTime(request):
     response = db.get_previous_attempt(request)
     question_id = request.POST.get('qid')
-    question_started = response.questions_start_time.get(question_id, False)
-    if question_started == False:
-        response.questions_start_time.update({ question_id: datetime.datetime.utcnow().timestamp() })
-        response.save()
+    visit_timestamps = response.questions_start_time.get(question_id, [])
+    timestamp = datetime.datetime.utcnow().timestamp()
+    visit_timestamps.append(timestamp)
+    response.questions_start_time.update({ question_id: visit_timestamps })
+    response.save()
     return JsonResponse({'success': True})

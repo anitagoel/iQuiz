@@ -26,7 +26,7 @@ urlpatterns = [
         path('attempt_analytics', views.student.attempt_analytics, name="attempt_analytics"),
         path('analytics_page', views.student.analytics_page, name="analytics_page"),
 
-        path('questionattemptstart', views.student.startattempt, name="start_question_attempt"),
+        path('questionattemptstart', views.student.questionVisitTime, name="question_visit_time"),
         ]
 
 if settings.DEBUG:

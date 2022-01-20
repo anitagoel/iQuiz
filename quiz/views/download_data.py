@@ -43,7 +43,7 @@ def download_grade_data(request):
             if len(student_response) > 0:
                 chosen_answer = student_response[-1][0]
                 most_recent_response = student_response[-1]
-                answer_submission_time = datetime.fromtimestamp(most_recent_response[1]).strftime('%d-%m-%Y %H:%M:%S')
+                answer_submission_time = timestampToFormat(most_recent_response[1], '%d-%m-%Y %H:%M:%S')
             else:
                 chosen_answer = None
                 answer_submission_time = 'Unasnswered'
@@ -61,14 +61,17 @@ def download_grade_data(request):
             answer_object = question.answer_set.filter(response=response_obj).first()
             question_start_time = questions_started.get(question_id, 'Not Recorded')
             if question_start_time != 'Not Recorded':
-                print(question_start_time)
-                question_start_time = datetime.fromtimestamp(int(question_start_time)).strftime('%d-%m-%Y %H:%M:%S')
+                if isinstance(question_start_time, list):
+                    question_start_time = list(map(lambda time: timestampToFormat(time, '%d-%m-%Y %H:%M:%S'), question_start_time ))
+                    question_start_time = json.dumps(question_start_time)
+                else:
+                    question_start_time = timestampToFormat(question_start_time, '%d-%m-%Y %H:%M:%S')
             time_spent = 0
             if answer_object:
                 time_spent = answer_object.time_spent
 
             for data in student_response:
-                data[1] = datetime.fromtimestamp(data[1]).strftime('%d-%m-%Y %H:%M:%S')
+                data[1] = timestampToFormat(data[1], '%d-%m-%Y %H:%M:%S')
 
             ws.write(row_num, 0, response_obj.user.name, font_style)
             ws.write(row_num, 1, question.question_type, font_style)
@@ -159,8 +162,11 @@ def download_report_data(request, attempt_id):
             if question.question_type == 'SAQ':
                 correct_incorrect = 'Answered' if student_response[-1][0] != '' else 'Unanswered'
             values = [student.name, exam_id, question.serial_number, question.question_difficulty, question.question_type, f'{quiz.contextTitle} > {quiz.quizName}', question.question_weight, earned_score, expected_response, json.dumps(student_response), str(chosen_response), time_spent, answer_submission_time ]
-            print(values)
             for index, value in enumerate(values):
                 ws.write(row_num, index, value)
     wb.save(response)
     return response
+
+
+def timestampToFormat(timestamp, format):
+    return datetime.fromtimestamp(int(timestamp)).strftime(format)
