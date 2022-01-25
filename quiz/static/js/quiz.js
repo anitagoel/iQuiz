@@ -2,14 +2,15 @@
 var current_section_start_time = null;   //used by sending time spent on a question to server
 let saved_questions = [];
 
-window.addEventListener('blur', (e) => {
+function handleTabSwitch() {
 	$.ajax({
 		type: "POST",
 		url: "tabswitch"
 	})
-});
+}
 
 function initialize_quiz() { 
+	window.addEventListener('blur', handleTabSwitch);
 	jumpToQuestion(question_ids[current_question_index]); //Jump to the first question
 	answered_question_ids.forEach(function(qid, index) {
 	    changeButtonState(qid, "answered");
@@ -82,9 +83,14 @@ var setTimeForQuestion = (qid) => {
 
 
 function submit() {
+	window.removeEventListener('blur', handleTabSwitch)
 	var ok = confirm("Are you sure you want to submit?");
 	if (ok){
 		force_submit();
+	}else{
+		window.setTimeout(() => {
+			window.addEventListener('blur', handleTabSwitch);
+		}, 1000)
 	}
 }
 function force_submit(){
@@ -92,7 +98,6 @@ function force_submit(){
 		redirectHandler('/student', 'You are being redirected to homepage...', 1000);
 	}, 30000); //definitely redirect to homepage after 30 seconds.
 	send_time_spent_details(1);
-	
 	message = 'The quiz is being submitted... <br/>Please wait!'
 	redirectHandler('#', message, null);
 	sendPostponedRequests(); //send postponed requests.

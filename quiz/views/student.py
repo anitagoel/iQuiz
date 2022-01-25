@@ -7,6 +7,7 @@ from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from pylti.common import post_message, generate_request_xml
 
 from quiz.utils.decorators import *
@@ -613,8 +614,11 @@ def questionVisitTime(request):
 
 
 @csrf_exempt
+@require_http_methods(["POST"])
 def tabSwitchCount(request):
     response = db.get_previous_attempt(request)
+    if response == False:
+        return JsonResponse({'success': False})
     response.tab_switch_count += 1
     response.save()
     return JsonResponse({'success': True})
