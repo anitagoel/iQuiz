@@ -2,6 +2,13 @@
 var current_section_start_time = null;   //used by sending time spent on a question to server
 let saved_questions = [];
 
+window.addEventListener('blur', (e) => {
+	$.ajax({
+		type: "POST",
+		url: "tabswitch"
+	})
+});
+
 function initialize_quiz() { 
 	jumpToQuestion(question_ids[current_question_index]); //Jump to the first question
 	answered_question_ids.forEach(function(qid, index) {

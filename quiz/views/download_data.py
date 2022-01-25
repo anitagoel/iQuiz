@@ -21,7 +21,7 @@ def download_grade_data(request):
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    columns = ['Username/ID', 'Title', 'Location', 'Question', 'Question Difficulty', 'Chosen Option', 'Chosen Answer', 'Expected Answer', 'Correct/Incorrect', 'Answer Submission Time', 'Answer Attempts', 'Start Time', 'Time Spent (secs)', 'Score Possible', 'Score Earned', 'State', 'IP Address']
+    columns = ['Username/ID', 'Title', 'Location', 'Question', 'Question Difficulty', 'Chosen Option', 'Chosen Answer', 'Expected Answer', 'Correct/Incorrect', 'Answer Submission Time', 'Answer Attempts', 'Start Time', 'Time Spent (secs)', 'Score Possible', 'Score Earned', 'State', 'Tab Switch Count', 'IP Address']
 
     for col_num in range(len(columns)):
         ws.write(row_num, col_num, columns[col_num], font_style)
@@ -90,7 +90,8 @@ def download_grade_data(request):
             ws.write(row_num, 13, question.question_weight)
             ws.write(row_num, 14, question.question_weight if chosen_answer == expected_answer else 0)
             ws.write(row_num, 15, json.dumps(student_response))
-            ws.write(row_num, 16, response_obj.ip_address)
+            ws.write(row_num, 16, response_obj.tab_switch_count)
+            ws.write(row_num, 17, response_obj.ip_address)
     wb.save(response)
     return response
 

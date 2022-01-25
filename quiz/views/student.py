@@ -610,3 +610,11 @@ def questionVisitTime(request):
     response.questions_start_time.update({ question_id: visit_timestamps })
     response.save()
     return JsonResponse({'success': True})
+
+
+@csrf_exempt
+def tabSwitchCount(request):
+    response = db.get_previous_attempt(request)
+    response.tab_switch_count += 1
+    response.save()
+    return JsonResponse({'success': True})
