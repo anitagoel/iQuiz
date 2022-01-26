@@ -73,6 +73,11 @@ def download_grade_data(request):
             for data in student_response:
                 data[1] = timestampToFormat(data[1], '%d-%m-%Y %H:%M:%S')
 
+            if isinstance(response_obj.tab_switch_count, dict):
+                tab_switch = response_obj.tab_switch_count.get(question_id, 0)
+            else:
+                tab_switch = response_obj.tab_switch_count
+
             ws.write(row_num, 0, response_obj.user.name, font_style)
             ws.write(row_num, 1, question.question_type, font_style)
             ws.write(row_num, 2, f'{quiz.contextTitle} > {quiz.quizName} > {question.question_type}', font_style)
@@ -90,7 +95,7 @@ def download_grade_data(request):
             ws.write(row_num, 13, question.question_weight)
             ws.write(row_num, 14, question.question_weight if chosen_answer == expected_answer else 0)
             ws.write(row_num, 15, json.dumps(student_response))
-            ws.write(row_num, 16, response_obj.tab_switch_count)
+            ws.write(row_num, 16, tab_switch)
             ws.write(row_num, 17, response_obj.ip_address)
     wb.save(response)
     return response

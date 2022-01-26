@@ -619,6 +619,8 @@ def tabSwitchCount(request):
     response = db.get_previous_attempt(request)
     if response == False:
         return JsonResponse({'success': False})
-    response.tab_switch_count += 1
+    qid = request.POST.get("qid")
+    count = response.tab_switch_count.get(qid, 0) + 1
+    response.tab_switch_count[qid] = count
     response.save()
     return JsonResponse({'success': True})

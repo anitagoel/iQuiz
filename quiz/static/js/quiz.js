@@ -5,7 +5,8 @@ let saved_questions = [];
 function handleTabSwitch() {
 	$.ajax({
 		type: "POST",
-		url: "tabswitch"
+		url: "tabswitch",
+		data: {qid: question_ids[current_question_index]}
 	})
 }
 

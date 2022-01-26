@@ -15,7 +15,7 @@ class Response(models.Model):
     ip_address = models.CharField(max_length=50, default="0.0.0.0")
     start_time = models.DateTimeField(default = datetime.datetime.utcnow)
     end_time = models.DateTimeField(null=True)
-    tab_switch_count = models.PositiveSmallIntegerField(default=0)
+    tab_switch_count = models.JSONField(default=dict)
     submission_time = models.DateTimeField(null=True)
     submitted = models.BooleanField(default= False)
 
