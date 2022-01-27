@@ -23,11 +23,18 @@
 </div>
 
 <hr>
-<div id='total_page_buttons' style="padding:10px; margin:5px;">
+<div id='total_page_buttons' class="d-flex justify-content-between" style="padding:10px; margin:5px;">
     {% for page_num in total_pages_num_list %}
     <button class="btn btn-primary buttons-page-num" style="min-width: 30px; max-width: 50px;" onClick="replace_content('grades', {page_num:{{page_num}} })">{{forloop.counter}}
     </button>
     {% endfor %}
+    {% if excel_data_download %}
+    <div>
+        Download response data:<a class="btn btn-sm btn-outline-info" href="/download/grade/excel" target="_blank">
+            <i class="fa fa-download"></i>
+        </a>
+    </div>
+    {% endif %}
 </div>
 <div class="table-responsive">
     <table class='table table-bordered table-striped table-highlight'>
@@ -54,7 +61,7 @@
             </td>
             {% if view_download_allowed %}
             <td>
-                <button onClick='download_attempt({{attempt.id}})' class='btn btn-info'>Download Response</button>
+                <a href='download/report/excel/{{attempt.id}}' class='btn btn-info'>Download Response</a>
             </td>
             {% endif %}
             <td>{{attempt.submission_time}}</td>

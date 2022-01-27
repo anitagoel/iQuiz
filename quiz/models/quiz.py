@@ -17,6 +17,7 @@ class Quiz(models.Model):
         max_length=200,
         help_text="Context Id: Unique for each term (run) of the course"
     )
+    contextTitle = models.CharField(max_length=100, help_text="Course Name of the quiz in the platform")
     createdOn = models.DateTimeField(default=datetime.datetime.utcnow)
     updatedOn = models.DateTimeField(auto_now=True)
     quizName = models.CharField(max_length=100, blank=True)
@@ -45,6 +46,7 @@ class QuizSettings(models.Model):
     The class to store the Settings of a Quiz
     """
     quiz = models.OneToOneField(Quiz, on_delete = models.CASCADE, primary_key=True)
+    randomizeQuestionOrder = models.BooleanField(default=False, verbose_name="Randomize Question Order")
     deadline = models.DateTimeField(
         blank=True,
         null=True,
@@ -84,6 +86,11 @@ class QuizSettings(models.Model):
          This will be shown in a html modal on clicking the button 'Information'. Leave blank to hide the button."
     )
     # TODO: showAnswers = models.ChoiceField() ##To be implemented
+    showAnswersAfterAttempt = models.BooleanField(
+        default=True,
+        verbose_name="Show Answers After Attempt",
+        help_text="Show correct answers to students after the attempt."
+        )
 
     def __str__(self):
         if self.quiz.quizName != '':

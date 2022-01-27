@@ -1,7 +1,7 @@
 certifi==2018.11.29
 chardet==3.0.4
 cycler==0.10.0
-Django==2.1.5
+Django
 django-extensions==2.1.5
 django-markdown-deux==1.0.5
 django-pagedown==1.0.6
@@ -23,3 +23,9 @@ requests==2.21.0
 requests-oauthlib==1.2.0
 six==1.12.0
 urllib3==1.24.1
+gunicorn
+django-heroku
+whitenoise
+psycopg2
+dj_database_url
+xlwt

@@ -169,6 +169,8 @@ def edit_question(request, question=None):
 
         question_type = QUESTION_TYPE[question_type_name]
         question = Question(quiz=quiz)        # create a new Question for the quiz
+        if request.FILES.get('video_file'):
+            question.video_file = request.FILES.get('video_file')
         quiz_questions = db.get_questions_by_quiz(quiz)
         if quiz_questions:
             last_question_index = quiz_questions.count() - 1
@@ -263,7 +265,7 @@ def grades(request):
     total_responses_count = responses.count()
     total_pages_num = math.ceil(total_responses_count/per_page)
     final_responses = responses[page_num*per_page: (page_num+1)*per_page]
-    attempts = [get_attempt_detail(response, quiz) for response in responses]
+    attempts = [get_attempt_detail(response, quiz) for response in final_responses]
 
     template = loader.get_template('grades.html')
     context =  {'attempts': attempts, 
@@ -271,6 +273,10 @@ def grades(request):
         'total_pages_num_list': range(total_pages_num), 
         'current_page_num' : page_num+1,
         'per_page' : per_page,
+        'quiz_id': quiz.id,
+        'excel_data_download': quiz.isEverAttempted, # Download excel data option
+        'download_allowed': True, # PDF file of student response
+        'view_download_allowed': True,
         }
     context['full'] = request.POST.get(JSON_REQUEST, False)
     
@@ -323,9 +329,16 @@ def get_attempt_detail(response, quiz):
     attempt['id'] = response.id
     attempt['student'] = str(response.user)
     attempt['submission_time'] = response.submission_time
-    attempt['duration'] = str(round((response.submission_time - response.start_time).total_seconds()//60)) + " mins" #minutes
+    attempt['duration'] = get_duration_time(response)
     attempt['grade'] = get_grade(response, quiz)
     return attempt
+
+
+def get_duration_time(response):
+    # breakpoint()
+    return str(
+        round((response.submission_time - response.start_time).total_seconds() // 60)) + " mins " \
+            + str(int((response.submission_time - response.start_time).total_seconds() % 60)) + " secs"
 
 
 @validate_manager
@@ -364,6 +377,7 @@ def get_grade(response, quiz):
     for qid in response_data:
         question = Question.objects.get(id=int(qid))
         question_type = QUESTION_TYPE[question.question_type]
-        obtained += question_type.get_marks(question, response_data[qid])
-    grade = obtained/total
+        most_recent_answer = student.extract_response(response_data, qid) # Selecting answer from Tuple (answer, timestamp)
+        obtained += question_type.get_marks(question, most_recent_answer)
+    grade = obtained/total * 100
     return round(grade, 2)  # round the grade to 2 d.p

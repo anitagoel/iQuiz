@@ -8,18 +8,28 @@ import json
 class Response(models.Model):
     quiz = models.ForeignKey(Quiz,  on_delete=models.CASCADE)
     user = models.ForeignKey(LTIUser,  on_delete=models.CASCADE)
+    question_ids = models.JSONField(default=list, help_text="Stores the order of questions to be shown to student")
     attempt_number = models.IntegerField(null=True)
     response = models.TextField(blank = True, default = '{}') #Initialize the response as empty dictionary
+    questions_start_time = models.JSONField(default=dict, help_text="Stores the start time of each question")
+    ip_address = models.CharField(max_length=50, default="0.0.0.0")
     start_time = models.DateTimeField(default = datetime.datetime.utcnow)
     end_time = models.DateTimeField(null=True)
+    tab_switch_count = models.JSONField(default=dict)
     submission_time = models.DateTimeField(null=True)
     submitted = models.BooleanField(default= False)
 
+    def __str__(self):
+        return f"User {self.user}'s Response"
+
     def add_or_update_response(self, qid, newResponse):
+        # breakpoint()
         response = json.loads(self.response)
         if response == '' or type(response) != dict:
             response = {}
-        response[qid] = newResponse
+        responseList = response.get(qid,[])
+        responseList.append(( newResponse, timezone.now().timestamp() ))
+        response[qid] = responseList
         self.response = json.dumps(response)
         self.save()
 
@@ -33,7 +43,7 @@ class Response(models.Model):
             return response
         qid = str(qid) #convert qid to string for the sake of json
         if qid in response:
-            return response[qid]
+            return response[qid][-1][0]
         else:
             return None
 

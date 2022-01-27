@@ -21,7 +21,7 @@ class TFQForm(forms.ModelForm):
 
     class Meta:
         model = Question
-        fields = ['question_weight', 'draft_statement']
+        fields = ['draft_statement', 'question_time_limit', 'question_weight', 'question_difficulty']
 
 
 class TFQ(AbstractQuestion):
@@ -101,7 +101,7 @@ class TFQ(AbstractQuestion):
 
 
     @staticmethod
-    def get_student_responded_paper_view_html(question, response):
+    def get_student_responded_paper_view_html(question, response, showAnswer):
         """
         Returns the HTML representation for the Question for the Responded Paper.
         It has disabled options, it can be used to generate the report of the student
@@ -117,7 +117,7 @@ class TFQ(AbstractQuestion):
             'statement': TFQ.get_statement_html(question),
             'options': TFQ.options,
             'checked_option_id': response,
-            'correct_option_id': correct_option_id
+            'correct_option_id': correct_option_id if showAnswer else None
         }
         return template.render(context)
 

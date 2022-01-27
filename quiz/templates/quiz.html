@@ -1,9 +1,16 @@
 {% extends 'student_base.html' %}
 {% load markdown_deux_tags %}
 {% load static %}
+{% load template_filters %}
 
 
 {% block head_ext %}
+<style>
+    form img {
+        display: block;
+        height: 30vh;
+    }
+</style>
 <script type="text/javascript">
 /**
 * Here we load the important variables directly to JS env.
@@ -22,10 +29,15 @@ var time_left = false;
 
 var question_ids = [];  // stores the question ids of the question.
 var question_types = {}; // stores the question types for each question [corresponds to question_ids]
+var question_time_limits = {};
 
 {% for qid, question_type in question_types %}
 question_types[{{qid}}] = '{{question_type}}';
 question_ids.push({{qid}});
+{% endfor %}
+
+{% for qid, question_time in question_time_limits.items %}
+question_time_limits[{{qid}}] = {{question_time}};
 {% endfor %}
 
 {% if answered_question_ids %}
@@ -58,7 +70,7 @@ var answered_question_ids = [];
 
     {% if time_left %}
     <div id="div-timer" class="heading">
-        <button class="btn  btn-default btn-rounded" id="timer">Time Left: <span id="timer-time"></span></button>
+        <button class="btn  btn-default btn-rounded" id="timer">Time Left for Exam: <span id="timer-time"></span></button>
     </div>
     {% endif %}
 
@@ -67,16 +79,21 @@ var answered_question_ids = [];
         <span class="thumb"></span>
     </div>
 
-    {% for qid, question in questions_html %}
+    {% for qid, question, question_weight in questions_html %}
     <div id='div-question-{{qid}}' class='question hidden-question'>
+        <div class="m-2 d-flex justify-content-between">
+            <p class="badge badge-secondary p-2">Time left to attend this question is: <span style="font-weight: bold;font-style: italic;" target="{{qid}}" class="question-timer text-bold"></span></p>
+            <p class="badge badge-info p-2">Question weightage: {{question_weight}}</p>
+        </div>
         <form id='form-question-{{qid}}' class="form-horizontal" method="POST" class="post-form">
+            <p>Q.No: {{forloop.counter}}</p>
             {{question|safe}}
         </form>
 
-        <button id='save-and-next-button' onClick="save_and_next({{qid}})" class="btn btn-info">Save and Next</button>
-        <button id='mark-for-review-button' onClick="mark_for_review_and_next('{{qid}}')" class="btn btn-dark">Mark For
-            Review &amp; Next
-        </button>
+        <button id='save-and-next-button' onClick="save_and_next({{qid}})" class="btn btn-info">{% if questions_html|length == forloop.counter %}Save{% else %}Save and Next{% endif %}</button>
+        {% if question_time_limits|get_item:qid == -1 %}
+        <button id='mark-for-review-button' onClick="mark_for_review_and_next(this, '{{qid}}')" class="btn btn-dark">Mark For Review</button>
+        {% endif %}
         <button id='clear-response-button' onClick="clear_response('{{qid}}')" class="btn btn-dark">Clear Response
         </button>
         <hr/>
@@ -84,7 +101,7 @@ var answered_question_ids = [];
     {% endfor %}
 
     <div id="div-submit" class="submit-button" >
-        <button id="submit-button-inside" class="btn btn-primary" onClick='submit()'>Submit</button>
+        <button id="submit-button-inside" class="btn btn-primary" onClick='submit()'>Submit Exam</button>
     </div>
 
     {% if question_statements %}
@@ -187,13 +204,14 @@ var answered_question_ids = [];
             <div class="card-body">
                 <div id='div-question-buttons-header' class="card-title">Navigate Questions</div>
                 <div id='question-buttons-grid' class="card-text">
-                    {% for qid in question_ids %}
+                    {% for qid, question_time in question_time_limits.items %}
                     <div class='question-button-grid-item'>
-                        <button id='id-question-button-{{qid}}' class='question-button btn-blue-grey unvisited'
-                        onclick='jumpToQuestion({{qid}})'>{{forloop.counter}}
-                    </button>
+                        <button id='id-question-button-{{qid}}' class='question-button {% if question_time > 0 %}question-timed {%endif%}btn-blue-grey unvisited'
+                            {% if not question_time > 0 %}onclick='jumpToQuestion({{qid}})'{%endif%}>{{forloop.counter}}
+                        </button>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
         </div>
     </div>
@@ -225,5 +243,8 @@ var answered_question_ids = [];
     if (time_left)
     	var timerStartedInterval = setInterval(timer_update, 1000);
     }
+
+    setTimeForQuestion(question_ids[current_question_index]);
+    
     </script>
     {% endblock javascript %}

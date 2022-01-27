@@ -54,8 +54,10 @@ def create_new_quiz(request):
     """
     quiz = Quiz() #New Quiz is created
     quiz.resourceLinkId = lti.get_resource_link_id(request)
+    quiz.contextTitle = lti.get_context_title(request)
     quiz.consumer_key = lti.get_oauth_consumer_key(request)
     quiz.contextId = lti.get_context_id(request)
+    quiz.quizName = lti.get_quiz_name(request)
     quiz.save() #Save the Quiz
     quizSettings = QuizSettings(quiz = quiz)
     quizSettings.save()
@@ -88,11 +90,13 @@ def get_questions_by_quiz(quiz):
     return Question.objects.order_by('serial_number').filter(quiz = quiz)
 
 
-def get_published_questions(quiz):
+def get_published_questions(quiz, random=None):
     """
     Returns the QuerySet of the published questions for the given quiz
     """
     questions = get_questions_by_quiz(quiz) #Questions are ordered by serial number
+    if random:
+        return questions.filter(published = True).order_by('?')
     return questions.filter(published = True)
 
 
@@ -125,6 +129,9 @@ def get_new_attempt(request):
     """
     quiz, user = get_quiz(request), get_user(request)
     quiz_settings = QuizSettings.objects.get(quiz = quiz)
+    questions = get_published_questions(quiz, random=quiz_settings.randomizeQuestionOrder)  # returns QuerySet of the published questions
+    question_id_list = [ question['id'] for question in questions.values('id') ] # Save the order of questions in db
+    used_attempt_number = None
     if not quiz_settings.maxAttempts:
         # Delete the last attempt and return a new attempt object if maxAttempts isn't set
         last_response = Response.objects.filter(quiz = quiz, user=user)
@@ -137,8 +144,9 @@ def get_new_attempt(request):
             # New attempt cannot be allowed, return False
             return False
     # Create a new Response and return.
-    attempt = Response(quiz = quiz, user = user)
+    attempt = Response(quiz = quiz, user = user, question_ids = question_id_list, attempt_number=used_attempt_number+1 if used_attempt_number is not None else None)
     attempt.set_end_time()
+    attempt.ip_address = get_ip(request)
     attempt.save()
 
     # set isEverAttempted variable of Quiz to be True if not already
@@ -191,3 +199,12 @@ def get_managers(quiz):
     """
     managers = QuizManager.objects.filter(quiz=quiz)
     return managers
+
+
+def get_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip

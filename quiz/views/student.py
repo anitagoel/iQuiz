@@ -7,6 +7,7 @@ from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from pylti.common import post_message, generate_request_xml
 
 from quiz.utils.decorators import *
@@ -44,6 +45,10 @@ def home(request, message=None):
         total_questions_number = questions.count()
         max_attempts = quiz_settings.maxAttempts
         duration = quiz_settings.duration
+        quiz_not_allowed = False
+        if max_attempts != None:
+            if len(attempts) >= max_attempts:
+                quiz_not_allowed = True
 
         # Check if the student has attempt left or not, if the handle is not None, then
         # we need to return the handle itself.
@@ -54,6 +59,7 @@ def home(request, message=None):
         if quiz and quiz.published:
             return render(request, 'student.html', {
                 'attempts': attempts, 
+                'quiz_not_allowed': quiz_not_allowed,
                 'information': information,
                 'max_attempts' : max_attempts,
                 'total_questions_number' : total_questions_number,
@@ -76,11 +82,11 @@ def resume_quiz(request, previous_attempt):
 
     
     quiz = db.get_quiz(request)
-    questions = db.get_published_questions(quiz)  # returns QuerySet of the published questions
+    quiz_settings = db.get_quiz_settings(quiz)
+    questions = db.get_published_questions(quiz, random=quiz_settings.randomizeQuestionOrder)  # returns QuerySet of the published questions
     end_time_stamp = previous_attempt.end_time.timestamp()
     # time left in milliseconds if end_time_stamp is there
     time_left = (end_time_stamp -  datetime.datetime.utcnow().timestamp()) * 1000 if end_time_stamp else None
-    quiz_settings = db.get_quiz_settings(quiz)
     information = quiz_settings.information
     total_questions_number = questions.count()
 
@@ -99,6 +105,7 @@ def resume_quiz(request, previous_attempt):
     question_types = list()
     responses = previous_attempt.get_response()  # get the responses of the student for this attempt
     answered_question_ids = []  # will be used to store the ids of the questions which are already answered
+    question_time_limits = {}
 
     for question in questions:
         question_type = QUESTION_TYPE[question.question_type]
@@ -110,10 +117,23 @@ def resume_quiz(request, previous_attempt):
             answered_question_ids.append(question.id)  # mark the question as answered by adding its id to list
         else:
             html = question_type.get_student_view_html(question)  # Add the HTML form field input for the question
-        questions_html.append((question.id, html))
+        questions_html.append((question.id, html, question.question_weight))
         question_ids.append(question.id)
         question_types.append((question.id, question_type.CLASS_NAME))
         questions_statements.append((question.id, question_type.get_statement_html(question)))
+        if question.question_time_limit == 0:
+            # Setting time limit as -1 for questions which doesnot have time limit
+            question_time_limits[question.id] = -1
+        else:
+            answer = Answer.objects.filter(question=question, response=previous_attempt).first()
+            if answer:
+                # Calculating time left to answer from the time spent to view the question
+                question_time_left = question.question_time_limit - answer.time_spent
+                question_time_limits[question.id] = question_time_left if question_time_left >=0 else 0
+                # TODO: create a list of answered timed questions to prevent student changing the answer if he answered in less seconds
+            else:
+                # Time left is the time set by teacher
+                question_time_limits[question.id] = question.question_time_limit
     
     context =  {
             'questions_html': questions_html,
@@ -123,6 +143,7 @@ def resume_quiz(request, previous_attempt):
             'information': information,
             'time_left': time_left,
             'answered_question_ids': answered_question_ids,
+            'question_time_limits': question_time_limits,
         }
 
     if request.is_ajax():
@@ -201,9 +222,11 @@ def save_response(request):
         qid_viewing_time = int(qid_viewing_time)
         time_duration = int(float(time_duration))     # get time duration in seconds
         question = Question.objects.get(pk = qid_viewing_time)      # get the question with id qid_viewing_time
-        Answer.add_time_spent(attempt, question, time_duration)
-        return JsonResponse({'success':'true'})
-
+        if Answer.add_time_spent(attempt, question, time_duration):
+            # Answer.set_answer(attempt, question)
+            return JsonResponse({'success':'true'})
+        return JsonResponse({'success': 'false'})
+    
     for qid_string in request.POST:
         # check that the student can only access the question of the quiz they are answering
         # TODO: Check the response request.POST[qid_string] is valid! It seems like a
@@ -363,11 +386,17 @@ def get_attempts_detail(request):
         attempt = dict()
         attempt['id'] = response.id
         attempt['submission_time'] = response.submission_time
-        attempt['duration'] = str(
-            round((response.submission_time - response.start_time).total_seconds() // 60)) + " mins"  # minutes
+        attempt['duration'] = get_duration_time(response)
         attempt['grade'] = get_grade(response, quiz)
         attempts.append(attempt)
     return attempts
+
+
+def get_duration_time(response):
+    # breakpoint()
+    return str(
+        round((response.submission_time - response.start_time).total_seconds() // 60)) + " mins " \
+            + str(int((response.submission_time - response.start_time).total_seconds() % 60)) + " secs"
 
 
 def get_attempts_details_and_paper(quiz, response_object, get_time_spent=False):
@@ -377,13 +406,15 @@ def get_attempts_details_and_paper(quiz, response_object, get_time_spent=False):
     attempt = get_attempt_stats(quiz, response_object)  # get basic stats and then we will add more data
     attempt['id'] = response_object.id
     attempt['start_time'] = response_object.start_time
-    attempt['duration'] = str(
-        round((response_object.submission_time -
-               response_object.start_time).total_seconds() // 60)) + " minutes"  # minutes
+    attempt['duration'] = get_duration_time(response_object)
     allowed_time = db.get_quiz_settings(quiz).duration
     attempt['allowed_time'] = str(allowed_time) + " minutes" if allowed_time else "Unlimited"
-    attempt['total_questions'] = attempt['correct'] + attempt['incorrect'] + attempt['unanswered']
-    attempt['total_grade_percent'] = str(attempt['total_grade'] * 100) + "%"
+    # Check if the total_grade is calculated or Shown after exam ends
+    if attempt['showAnswer']:
+        # Grade is calculated so convert to percentage
+        attempt['total_grade_percent'] = str(attempt['total_grade'] * 100) + "%"
+    else:
+        attempt['total_grade_percent'] = attempt['total_grade']
 
     # now we shall form the responded question paper
 
@@ -397,7 +428,7 @@ def get_attempts_details_and_paper(quiz, response_object, get_time_spent=False):
     for question in questions:
         question_type = QUESTION_TYPE[question.question_type]
         response = extract_response(response_data, question.id)
-        html = question_type.get_student_responded_paper_view_html(question, response)
+        html = question_type.get_student_responded_paper_view_html(question, response, showAnswer=quiz.quizsettings.showAnswersAfterAttempt)
         questions_html.append((question.id, html))
         question_statements.append(question_type.get_statement_html(question))
         print(html)
@@ -428,8 +459,9 @@ def get_grade(response, quiz):
     for qid in response_data:
         question = Question.objects.get(id=int(qid))
         question_type = QUESTION_TYPE[question.question_type]
-        obtained += question_type.get_marks(question, response_data[qid])
-    grade = obtained / total
+        most_recent_answer = extract_response(response_data, qid) # Selecting answer from Tuple (answer, timestamp)
+        obtained += question_type.get_marks(question, most_recent_answer)
+    grade = obtained / total * 100 # Todo: Should it be multiplied?
     return round(grade, 2)  # round the grade to 2 d.p
 
 
@@ -445,6 +477,7 @@ def get_attempt_stats(quiz, response):
     incorrect_answer = 0
     total_number = Question.objects.filter(quiz=quiz, published=True).count()
     response_data = response.get_response()
+
     for qid in response_data:
         try:
             question = Question.objects.get(id=int(qid))
@@ -460,13 +493,17 @@ def get_attempt_stats(quiz, response):
             incorrect_answer += 1
     grade = round(total_marks / db.get_quiz_total_marks(quiz), 2)
     unanswered = total_number - (correct_answer + incorrect_answer)
-    return dict(total_grade=grade, correct=correct_answer, incorrect=incorrect_answer, unanswered=unanswered)
+    if quiz.quizsettings.showAnswersAfterAttempt:
+        # Student allowed to see answer and hence the grade after attending quiz
+        return dict(total_grade=grade, correct=correct_answer, incorrect=incorrect_answer, 
+                    unanswered=unanswered, total_questions=total_number, showAnswer=True)
+    return dict(total_grade='Shown after exam ends', unanswered=unanswered, total_questions=total_number, showAnswer=False)
 
 
 def extract_response(responses, qid):
     qid = str(qid)
-    if qid in responses:
-        return responses[qid]
+    if qid in responses and len(responses[qid]) > 0:
+        return responses[qid][-1][0]
     else:
         return None
 
@@ -562,3 +599,28 @@ def analytics_page(request):
 
 def get_average_time_spent_for_all_attempt(quiz):
     return 0
+
+
+@csrf_exempt
+def questionVisitTime(request):
+    response = db.get_previous_attempt(request)
+    question_id = request.POST.get('qid')
+    visit_timestamps = response.questions_start_time.get(question_id, [])
+    timestamp = datetime.datetime.utcnow().timestamp()
+    visit_timestamps.append(timestamp)
+    response.questions_start_time.update({ question_id: visit_timestamps })
+    response.save()
+    return JsonResponse({'success': True})
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def tabSwitchCount(request):
+    response = db.get_previous_attempt(request)
+    if response == False:
+        return JsonResponse({'success': False})
+    qid = request.POST.get("qid")
+    count = response.tab_switch_count.get(qid, 0) + 1
+    response.tab_switch_count[qid] = count
+    response.save()
+    return JsonResponse({'success': True})

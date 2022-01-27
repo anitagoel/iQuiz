@@ -1,7 +1,17 @@
 
 var current_section_start_time = null;   //used by sending time spent on a question to server
+let saved_questions = [];
+
+function handleTabSwitch() {
+	$.ajax({
+		type: "POST",
+		url: "tabswitch",
+		data: {qid: question_ids[current_question_index]}
+	})
+}
 
 function initialize_quiz() { 
+	window.addEventListener('blur', handleTabSwitch);
 	jumpToQuestion(question_ids[current_question_index]); //Jump to the first question
 	answered_question_ids.forEach(function(qid, index) {
 	    changeButtonState(qid, "answered");
@@ -10,17 +20,78 @@ function initialize_quiz() {
 	updateAnswerNumberButtons ();
 	
 	$("#questions-slider-nav").on('input', function () {
-		jumpToQuestion(question_ids[this.value-1]);
+		let index = this.value-1;
+		// console.log('Is the jumping question non timed: ',question_time_limits[question_ids[index]] === -1)
+		if (question_time_limits[question_ids[index]] === -1){
+			jumpToQuestion(question_ids[index]);
+		}else{
+			alert("Cannot jump to timed questions!");
+			this.value = current_question_index+1;
+		}
 	});
 }
 
 function len(obj) { return Object.keys(obj).length; }
 
+let time_intervals = {};
+let not_viewable = [];
+
+function removeTimeInterval(qid) {
+	for (const [qid, interval] of Object.entries(time_intervals)) {
+		clearInterval(interval);
+		not_viewable.push(Number(qid));
+		$(`#id-question-button-${qid}`).css('text-decoration', 'line-through');
+		$(`#id-question-button-${qid}`).css('opacity', '0.6');
+		setTimeout(()=> {
+			document.querySelector(`#div-${qid}`).querySelectorAll('input').forEach(node => node.setAttribute('disabled', true))
+		}, 2000) // Setting disabled without timeout doesnot send answer to backend
+	  }
+	time_intervals = {}; // Emptying time intervals object after clearing all timeInterval
+}
+
+var setTimeForQuestion = (qid) => {
+	let question_timer = document.querySelector(`.question-timer[target="${qid}"]`);
+	let question_time_interval=null;
+	let question_rem_time = question_time_limits[qid];
+	if (question_rem_time === -1)
+		question_timer.innerHTML = 'No time limit';
+	else {
+		// Question has a time limit
+		// console.log("Question not viewable", not_viewable.includes(qid), qid, not_viewable)
+		if (not_viewable.includes(qid)){
+			// Timed question which already had a time interval removed and answer saved
+			// console.log("Question in not viewable")
+			question_timer.innerHTML = 0;
+		} else {
+			question_timer.innerHTML = question_rem_time
+			question_time_interval = setInterval(() => {
+				if(question_rem_time===0){
+					removeTimeInterval(qid);
+					clearInterval(question_time_interval);
+					console.log("The index of ",qid, saved_questions.indexOf(qid))
+					if(saved_questions.indexOf(qid) === -1) save_and_next(qid);
+					return;
+				}
+				question_rem_time = question_rem_time - 1;
+				question_time_limits[qid] = question_rem_time; // Update time in time limit object
+				question_timer.innerHTML = question_rem_time;
+			}, 1000);
+			// Add the time interval in object for clearing later
+			time_intervals[qid] = question_time_interval;
+		}
+	}
+}
+
 
 function submit() {
+	window.removeEventListener('blur', handleTabSwitch)
 	var ok = confirm("Are you sure you want to submit?");
 	if (ok){
 		force_submit();
+	}else{
+		window.setTimeout(() => {
+			window.addEventListener('blur', handleTabSwitch);
+		}, 1000)
 	}
 }
 function force_submit(){
@@ -28,7 +99,6 @@ function force_submit(){
 		redirectHandler('/student', 'You are being redirected to homepage...', 1000);
 	}, 30000); //definitely redirect to homepage after 30 seconds.
 	send_time_spent_details(1);
-	
 	message = 'The quiz is being submitted... <br/>Please wait!'
 	redirectHandler('#', message, null);
 	sendPostponedRequests(); //send postponed requests.
@@ -53,19 +123,25 @@ function changeButtonState(qid, state){
 		case exclusiveQuestionButtonState[0]:
 			$('#id-question-button-'+ qid).addClass('btn-blue-grey').addClass('unvisited');
 			break;
-		case exclusiveQuestionButtonState[1]: //Transition from 
-			$('#id-question-button-'+ qid).removeClass('btn-blue-grey').removeClass('unvisited').addClass('btn-danger').addClass('not-answered');
+		case exclusiveQuestionButtonState[1]: //Transition to Not answered (Clear response)
+			$('#id-question-button-'+ qid).removeClass('btn-blue-grey').removeClass('unvisited') // Remove unvisited
+			.removeClass('btn-success').removeClass('answered') // remove answered
+			.removeClass('btn-info').removeClass('marked') // remove marked
+			.addClass('btn-danger').addClass('not-answered'); // add not answered
 			break;
-		case exclusiveQuestionButtonState[2]:
-			$('#id-question-button-'+ qid).removeClass('btn-info').removeClass('marked').removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
+		case exclusiveQuestionButtonState[2]: // Answered and marked review will show like marked
+			// $('#id-question-button-'+ qid).removeClass('btn-info').removeClass('marked').removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
+			$('#id-question-button-'+ qid).removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
 			$('#id-question-button-'+ qid).addClass('btn-success').addClass('answered');
 			break; //Add answered classes
 		case exclusiveQuestionButtonState[3]:
-			$('#id-question-button-'+ qid).removeClass('btn-success').removeClass('answered').removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
+			// $('#id-question-button-'+ qid).removeClass('btn-success').removeClass('answered').removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
+			$('#id-question-button-'+ qid).removeClass('btn-danger').removeClass('not-answered'); //Remove marked and not-answered classes
 			$('#id-question-button-'+ qid).addClass('btn-info').addClass('marked');
 			break;
 	}
 }
+
 
 function updateAnswerNumberButtons () {
 	//Function to update the number of unvisited, answered, not-answered and marked questions.
@@ -99,6 +175,7 @@ function validate_data(data, qid){
 function save_and_next(qid){
 	//Mark as visited
 	current_question_index = question_ids.indexOf(qid);
+	saved_questions.push(question_ids[current_question_index]);
 	//Perform following only if the form is actually filled/question is answered
 	var form = $('#form-question-' + qid);
 	//validate that required fields are there before sending the response
@@ -114,15 +191,24 @@ function save_and_next(qid){
         jumpToQuestion(question_ids[current_question_index+1]);
     }
     else{
-    	jumpToQuestion(question_ids[0]);
+    	// jumpToQuestion(question_ids[0]);
+		if(qid === question_ids[question_ids.length-1]){
+			console.log("Force Submit")
+			// force_submit();
+		}
     }
 
     updateAnswerNumberButtons ();
 }
 
-function mark_for_review_and_next(qid){
-	save_and_next(qid);
+function mark_for_review_and_next(btnobj, qid){
+	// save_and_next(qid);
 	changeButtonState(qid, "marked");
+	$(btnobj).toggleClass('btn-dark text-dark');
+	if ($(btnobj).text() == "Mark For Review")
+       $(btnobj).text("Marked For Review")
+    else
+       $(btnobj).text("Mark For Review");
 	updateAnswerNumberButtons ();
 }
 
@@ -259,7 +345,7 @@ function send_time_spent_details(qid){
 			return; // Ignore if less than 1 second TODO: Was it right thing to do? Should we create a dictionary to store the time locally and send when its beyond a fixed time?
 		}
 		request = [question_id_with_tag, {"viewing-time-qid": current_question_id, "viewing-time-duration": diff}]; 
-		saveResponseAjax(request);
+		setTimeout(() => {saveResponseAjax(request)}, 1000); // Since backend could not get the saved response immediately for processing
 		//Now change the current_section_start_time to now!
 		current_section_start_time = Date.now();
 	}
@@ -292,13 +378,25 @@ function send_time_spent_details_ajax(request) {
 // the array contains the function which are called when jumpToQuestion is called. Note that switchQuestionView modifies
 // the current_question_id, hence it is called at last (might be used by previous functions)
 
-jumpToQuestionFunctions = [send_time_spent_details, switchQuestionView];  
+jumpToQuestionFunctions = [sendQuestionStartTime, send_time_spent_details, removeTimeInterval, switchQuestionView, setTimeForQuestion];  
 
 function jumpToQuestion(qid){
 	//Call each function from jumpToQuestionFunctions array with qid.
 	for (index in jumpToQuestionFunctions){
 		jumpToQuestionFunctions[index](qid);
 	}
+}
+
+
+function sendQuestionStartTime(qid) {
+	if (current_section_start_time == null){
+		current_section_start_time = Date.now();
+	}
+	$.ajax({
+		type: "POST",
+		url: "questionattemptstart",
+		data: {qid}
+	})
 }
 
 
@@ -357,3 +455,8 @@ function timer_update() {
     force_submit();
   }
 }
+
+$(window).on('beforeunload', () => {
+	let current_question_time_limit = question_time_limits[current_question_id];
+	send_time_spent_details(current_question_id, current_question_time_limit == -1?null:current_question_time_limit);
+})

@@ -34,17 +34,26 @@ class Answer (models.Model):
         max_duration = (datetime.datetime.utcnow() - response.start_time).total_seconds()     # any time_duration cannot be longer than the time which has passed since starting the attempt
         if time_duration <= max_duration:
             answer.time_spent += time_duration
+            print(question.draft_statement, "Time spent", answer.time_spent, "Question limit", question.question_time_limit)
+            if question.question_time_limit > 0 and answer.time_spent > (question.question_time_limit + 2):
+                return False
             answer.save()
             return True
         return False
 
     @staticmethod
-    def set_answer(response, question, answer):
+    def set_answer(response, question):
         """
         Function to set the answer for the question in this attempt
         """
         # TODO: Yet to be implemented.
-        pass
+        # pass
+        # answer, success = Answer.objects.get_or_create(response=response, question=question)
+        # print(response.response)
+        # answer.answer = json.loads(response.response).get(str(question.id), [('No answer')])[-1]
+        # print("Answer set to", answer.answer)
+        # answer.save()
+
 
     @staticmethod
     def get_time_spent(response, question):

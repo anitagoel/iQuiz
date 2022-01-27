@@ -15,21 +15,21 @@ from .question import AbstractQuestion
 
 CHECK_FORM_SAVE_REQUEST = "form-save-request"  # this helps in identifying that the POST request is saving form
 
-class MCQForm(forms.ModelForm):
+class VMCQForm(forms.ModelForm):
     draft_statement = forms.CharField(widget=PagedownWidget(attrs={'placeholder': 'Question Statement', 'rows': 2}),
                                       strip=False)
 
     class Meta:
         model = Question
-        fields = ['draft_statement', 'question_weight', 'question_time_limit', 'question_difficulty']
+        fields = ['video_file', 'draft_statement', 'question_weight', 'question_difficulty', 'question_time_limit']
 
 
-class MCQ(AbstractQuestion):
+class VMCQ(AbstractQuestion):
     """
     The class is to implement the Multiple Choice type Question.
     """
-    CLASS_NAME = "MCQ"
-    CLASS_VERBOSE_NAME = "Multiple Choice Question"
+    CLASS_NAME = "VMCQ"
+    CLASS_VERBOSE_NAME = "Video Based Multiple Choice Question"
     # POST Request Variable name as used in MCQ template
     DRAFT_OPTIONS = "draft_options"
     DRAFT_STATEMENT = "draft_statement"
@@ -43,11 +43,12 @@ class MCQ(AbstractQuestion):
         which will be used to edit/add a new question.
         On success return to HttpResponseRedirect(reverse('edit')). 
         """
-        question.question_type = MCQ.CLASS_NAME
-        template = loader.get_template('questions/mcq-form.html')
+        question.question_type = VMCQ.CLASS_NAME
+        template = loader.get_template('questions/vmcq-form.html')
         message = None
         # fill the variables from the POST if possible, else from the 
         # question
+        # breakpoint()
         if question.draft_options_data and question.draft_options_data != '':
             options = json.loads(question.draft_options_data)
             expected_option_id = question.draft_expected_response
@@ -57,13 +58,13 @@ class MCQ(AbstractQuestion):
 
         if request.method == "POST" and request.POST.get(CHECK_FORM_SAVE_REQUEST, False):
             valid = True
-            form = MCQForm(data = request.POST, instance=question)
-            options_list = request.POST.getlist(MCQ.DRAFT_OPTIONS)
+            form = VMCQForm(data = request.POST, instance=question)
+            options_list = request.POST.getlist(VMCQ.DRAFT_OPTIONS)
             # following if-block might not be required?
-            if MCQ.DRAFT_OPTIONS not in request.POST or len(options_list) < 2:
+            if VMCQ.DRAFT_OPTIONS not in request.POST or len(options_list) < 2:
                 message = "Add at least two options!"
                 valid = False
-            expected_option_id = request.POST.get(MCQ.CORRECT_RESPONSE,False)
+            expected_option_id = request.POST.get(VMCQ.CORRECT_RESPONSE,False)
             if not expected_option_id:
                 message="Please add a correct option"
                 valid = False
@@ -78,12 +79,13 @@ class MCQ(AbstractQuestion):
                     qs = form.save(commit=False)
                     qs.draft_expected_response = expected_option_id
                     qs.draft_options_data = json.dumps(option_tuples)
+                    # if request.FILES.get('video_file'):
                     qs.save()
                     message = "The question is saved/updated successfully!"
-                    return JsonResponse({'replace_content': "edit", 'message' : message})
+                    return JsonResponse({'replace_content': "edit", 'message' : message, "file": True})
 
         else:
-            form = MCQForm(instance=question)
+            form = VMCQForm(instance=question)
         context = {'form': form, 'options': options,
                                'expected_option_id': expected_option_id}
 
@@ -110,23 +112,26 @@ class MCQ(AbstractQuestion):
     @staticmethod
     def get_student_view_html(question):
         options = json.loads(question.options_data)
-        template = loader.get_template('questions/mcq.html')
+        template = loader.get_template('questions/vmcq.html')
         context = {
             'qid': question.id,
-            'statement': MCQ.get_statement_html(question),
+            'statement': VMCQ.get_statement_html(question),
             'options': options,
+            'video_file': question.video_file,
         }
+        print(context)
         return template.render(context)
 
     @staticmethod
     def get_student_responded_view_html(question, response):
         options = json.loads(question.options_data)
-        template = loader.get_template('questions/mcq.html')
+        template = loader.get_template('questions/vmcq.html')
         context = {
             'qid': question.id,
-            'statement': MCQ.get_statement_html(question),
+            'statement': VMCQ.get_statement_html(question),
             'options': options,
             'checked_option_id': response,
+            'video_file': question.video_file,
         }
         return template.render(context)
 
@@ -142,13 +147,14 @@ class MCQ(AbstractQuestion):
         """
         options = json.loads(question.options_data)
         correct_option_id = question.expected_response
-        template = loader.get_template('questions/mcq.html')
+        template = loader.get_template('questions/vmcq.html')
         context = {
             'qid': question.id,
-            'statement': MCQ.get_statement_html(question),
+            'statement': VMCQ.get_statement_html(question),
             'options': options,
             'checked_option_id': response,
-            'correct_option_id': correct_option_id if showAnswer else None
+            'correct_option_id': correct_option_id if showAnswer else None,
+            'video_file': question.video_file,
         }
         return template.render(context)
 
