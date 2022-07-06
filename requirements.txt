@@ -9,7 +9,7 @@ httplib2==0.12.1
 idna==2.8
 kiwisolver==1.0.1
 lti==0.9.4
-lxml==4.3.0
+lxml==4.9.1
 markdown2==2.3.7
 numpy==1.16.1
 oauth2==1.9.0.post1
