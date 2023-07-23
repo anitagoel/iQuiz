@@ -1,0 +1,45 @@
+{% extends 'questions/question-form.html' %}
+{% load markdown_deux_tags %}
+{% load static %}
+
+{% block head %}
+	{{ form.media }}
+	<link rel="stylesheet" href="{% static 'pagedown/custom.css' %}">
+{% endblock head %}
+
+
+{% block content %}
+<div>
+	<h2>Add/Edit Question</h2>
+	<h3>Prompt Question</h3>
+ 	<div class=''>
+    <form id="form_id" action='prompt' class="form-horizontal" method="POST" class="post-form">
+    	{% if not id %}
+    	<input type="hidden" id="question-type" name="question_type" value="Prompt">
+    	{% else %}
+    	<input type="hidden" id="qid-form" name="id" value="{{id}}">
+		{% endif %}
+    	<div class="table-responsive">
+	   		<table  class='table table-bordered table-striped table-highlight'>
+	   		<tbody id="form-table">
+	   		{{ form }}
+	   		</tbody>
+	  		</table>
+	  	</div>
+        <button type="submit" class="save btn btn-primary">Save</button>
+    </form>
+    </div>
+ </div>
+
+
+{% block javascript %}
+<script>
+{% if options %}
+	var current_option_number = {{options|length}};	
+{% else %}
+	var current_option_number = 0;
+{% endif %}
+</script>
+<script src="{% static 'js/questions/mcq.js' %}"></script>
+{% endblock javascript %}
+{% endblock content %}

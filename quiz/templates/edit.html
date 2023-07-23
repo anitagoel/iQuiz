@@ -2,11 +2,12 @@
 {% load static %}
 
 {% block content %}
-{% if questions %}
+{% if questions or prompts %}
 <div class="questions" style="display:inline-block; width:100%;">
     <div width="100%" class="table-responsive">
         <table class='table table-bordered table-striped table-highlight'>
             <tbody>
+            <tr><td colspan="4">Questions</td></tr>
             {% for question in questions %}
             <tr>
                 <td>{{forloop.counter}}</td>
@@ -18,6 +19,21 @@
                 </td>
                 <td>
                     <button onClick="delete_question({{question.qid}})" class='btn btn-info'>Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+            <tr><td colspan="4">Prompts</td></tr>
+            {% for prompt in prompts %}
+            <tr>
+                <td>{{forloop.counter}}</td>
+                <td><h4> {{prompt.question | safe}} </h4></td>
+                <td>
+                    <button onClick="replace_content(
+						'prompt', {id:{{prompt.id}} })" class='btn btn-info'>Edit
+                    </button>
+                </td>
+                <td>
+                    <button onClick="delete_prompt({{prompt.id}})" class='btn btn-info'>Delete</button>
                 </td>
             </tr>
             {% endfor %}
@@ -41,6 +57,7 @@
     <button onClick="replace_content('edit_question', {question_type:'TFQ'})" class="btn btn-default ">Add TFQ</button>
     <button onClick="replace_content('edit_question', {question_type:'SAQ'})" class="btn btn-default ">Add SAQ</button>
     <button onClick="replace_content('edit_question', {question_type:'VMCQ'})" class="btn btn-default ">Add VMCQ</button>
+    <button onClick="replace_content('prompt')" class="btn btn-default ">Add Prompt</button>
 </div>
 
 {% endblock content %}
@@ -55,6 +72,18 @@
 				//send delete request
 				ref="edit_question";
 				data_extra = {qid:qid, confirm_delete:true};
+				replace_content(ref, data_extra);
+			}
+	};
+
+    var delete_prompt = function(id) {
+		ok = confirm("Are you sure you want to delete this question?");
+		if (!ok) return;
+		ok2 = confirm("Really!?");
+		if (ok2){
+				//send delete request
+				ref="prompt";
+				data_extra = {id: id, confirm_delete:true};
 				replace_content(ref, data_extra);
 			}
 	};
