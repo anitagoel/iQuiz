@@ -230,7 +230,7 @@ function submitPrompt(){
 	document.removeEventListener('keyup', event_recorder);
 	document.removeEventListener('click', event_recorder);
 	document.removeEventListener('dblclick', event_recorder);
-	$('#PromptModal form').reset();
+	$('#PromptModal form')[0].reset();
 
 	moveToNextQuestion();
 }
