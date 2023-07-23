@@ -170,6 +170,84 @@ function validate_data(data, qid){
         return validator(data);
     return data
 }
+let events = [];
+const event_recorder = (event) => {
+	console.log(event);
+	if(event instanceof MouseEvent)
+		events.push({timestamp: Date.now(), event_type: event.type});
+	if(event instanceof KeyboardEvent) {
+		events.push({timestamp: Date.now(), event_type: event.type, key: event.key, shiftKey: event.shiftKey, code: event.code, capsLock: event.getModifierState('CapsLock')})
+	}
+}
+
+
+function getPrompt(questionNumber) { 
+	$.ajax({
+		type: "GET",
+		url: "student_prompt",
+		data: {questionNumber: questionNumber},
+		success: (response) => {
+			$('#PromptModal input[name=id]').val(response.id);
+			$('#PromptModal label[for=response]').text(response.question);
+			$('#PromptModal').modal('show');
+			document.addEventListener('keydown', event_recorder);
+			document.addEventListener('keyup', event_recorder);
+			document.addEventListener('click', event_recorder);
+			document.addEventListener('dblclick', event_recorder);
+		},
+		error: (response) => {
+			moveToNextQuestion();
+		}
+	})
+}
+
+function formToObject(form) {
+	if(form instanceof HTMLFormElement){
+		let data = {};
+		let formData = new FormData(form);
+		formData.forEach(function(value, key){
+			data[key] = value;
+		});
+		return data;
+	}
+	throw new Error("The element is not a form element");
+}
+
+function submitPrompt(){
+	let data = formToObject(document.querySelector('#PromptModal form'));
+	console.log(data);
+	data['events'] = events;
+	$.ajax({
+		type: "POST",
+		url: "student_prompt",
+		data: JSON.stringify(data),
+		contentType: "application/json; charset=utf-8",
+	})
+
+	$('#PromptModal').modal('hide');
+
+	document.removeEventListener('keydown', event_recorder);
+	document.removeEventListener('keyup', event_recorder);
+	document.removeEventListener('click', event_recorder);
+	document.removeEventListener('dblclick', event_recorder);
+	$('#PromptModal form').reset();
+
+	moveToNextQuestion();
+}
+
+function moveToNextQuestion() {
+	if (current_question_index < question_ids.length - 1) {
+        jumpToQuestion(question_ids[current_question_index+1]);
+    }
+    else{
+    	// jumpToQuestion(question_ids[0]);
+		if(question_ids.length - 1 == current_question_index){
+			console.log("It is the last question! Force Submit");
+			// force_submit();
+		}
+    }
+    updateAnswerNumberButtons ();
+}
 
 
 function save_and_next(qid){
@@ -187,18 +265,12 @@ function save_and_next(qid){
         success = saveResponseAjax(request);
     }
 
-    if (current_question_index < question_ids.length - 1) {
-        jumpToQuestion(question_ids[current_question_index+1]);
-    }
-    else{
-    	// jumpToQuestion(question_ids[0]);
-		if(qid === question_ids[question_ids.length-1]){
-			console.log("Force Submit")
-			// force_submit();
-		}
-    }
+	if(prompts.indexOf(current_question_index + 1) != -1){
+		getPrompt(current_question_index + 1);
+		return;
+	}
 
-    updateAnswerNumberButtons ();
+    moveToNextQuestion();
 }
 
 function mark_for_review_and_next(btnobj, qid){
