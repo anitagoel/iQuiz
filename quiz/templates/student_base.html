@@ -60,6 +60,33 @@
 		    {% endblock footer %}
 		</div>
 
+		<!-- Modal -->
+		<div class="modal fade" id="PromptModal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" aria-labelledby="Prompt Box" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered" role="document">
+			  <div class="modal-content">
+				<div class="modal-header">
+				  <h5 class="modal-title" id="ModalTitle">Question Prompt</h5>
+				  <!-- <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				  </button> -->
+				</div>
+				<div class="modal-body">
+					<form>
+					  <div class="form-group">
+						<input type="number" hidden name="id" value="">
+						<label for="response" class="col-form-label">Question</label>
+						<textarea class="form-control" name="response" id="response" rows="5"></textarea>
+					  </div>
+					</form>
+				  </div>
+				<div class="modal-footer">
+				  <!-- <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button> -->
+				  <button type="button" class="btn btn-primary" onclick="submitPrompt()">Submit</button>
+				</div>
+			  </div>
+			</div>
+		  </div>
+
 		    <!--Java Scripts-->
 		    
 	<!-- JQuery -->
