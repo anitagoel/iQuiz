@@ -1,123 +1,148 @@
-{% load markdown_deux_tags %}
-{% load static %}
-
-{% block content %}
+{% load markdown_deux_tags %} {% load static %} {% block content %}
 
 <h2 align="center">Grades</h2>
 
 {% if not attempts %}
-<div class='message'>
-    <hr/>
-    <h4>No attempts found!</h4>
-    <br/>
-    <p>You will be shown the attempts details of the students here. Please visit this page again later!</p>
+<div class="message">
+	<hr />
+	<h4>No attempts found!</h4>
+	<br />
+	<p>
+		You will be shown the attempts details of the students here. Please
+		visit this page again later!
+	</p>
 </div>
 {% else %}
-<div class='heading'>
-    <span>The attempts details are shown below. You can view the full responses' details by clicking <strong>View Response</strong> button.</span>
+<div class="heading">
+	<span
+		>The attempts details are shown below. You can view the full responses'
+		details by clicking <strong>View Response</strong> button.</span
+	>
 </div>
-<br>
+<br />
 <div id="grade_page_info">
-    <h5 id='page_num'>Page Number : <strong>{{current_page_num}}</strong></h5>
-    <h5 id='per_page'>Max Attempts Per Page : <strong>{{per_page}}</strong></h5>
+	<h5 id="page_num">Page Number : <strong>{{current_page_num}}</strong></h5>
+	<h5 id="per_page">Max Attempts Per Page : <strong>{{per_page}}</strong></h5>
 </div>
 
-<hr>
-<div id='total_page_buttons' class="d-flex justify-content-between" style="padding:10px; margin:5px;">
-    {% for page_num in total_pages_num_list %}
-    <button class="btn btn-primary buttons-page-num" style="min-width: 30px; max-width: 50px;" onClick="replace_content('grades', {page_num:{{page_num}} })">{{forloop.counter}}
-    </button>
-    {% endfor %}
-    {% if excel_data_download %}
-    <div>
-        Download response data:<a class="btn btn-sm btn-outline-info" href="/download/grade/excel" target="_blank">
-            <i class="fa fa-download"></i>
-        </a>
-    </div>
-    {% endif %}
+<hr />
+<div
+	id="total_page_buttons"
+	class="d-flex justify-content-between"
+	style="padding: 10px; margin: 5px"
+>
+	{% for page_num in total_pages_num_list %}
+	<button
+		class="btn btn-primary buttons-page-num"
+		style="min-width: 30px; max-width: 50px"
+		onClick="replace_content('grades', {page_num:{{page_num}} })"
+	>
+		{{forloop.counter}}
+	</button>
+	{% endfor %} {% if excel_data_download %}
+	<div>
+		Download response data:<a
+			class="btn btn-sm btn-outline-info"
+			href="/download/grade/excel"
+			target="_blank"
+		>
+			<i class="fa fa-download"></i>
+		</a>
+	</div>
+	{% endif %}
 </div>
 <div class="table-responsive">
-    <table class='table table-bordered table-striped table-highlight'>
-        <thead>
-        <tr>
-            <td>S.No.</td>
-            <td>Student</td>
-            <td>View Response</td>
-            {% if download_allowed %}
-            <td>Download PDF</td>
-            {% endif %}
-            <td>Attempt Submission Time</td>
-            <td>Duration of Attempt</td>
-            <td>Grades</td>
-        </tr>
-        </thead>
-        <tbody>
-        {% for attempt in attempts %}
-        <tr>
-            <td>{{forloop.counter}}</td>
-            <td>{{attempt.student}}</td>
-            <td>
-                <button onClick='show_attempt({{attempt.id}})' class='btn btn-info'>View Response</button>
-            </td>
-            {% if view_download_allowed %}
-            <td>
-                <a href='download/report/excel/{{attempt.id}}' class='btn btn-info'>Download Response</a>
-            </td>
-            {% endif %}
-            <td>{{attempt.submission_time}}</td>
-            <td>{{attempt.duration}}</td>
-            <td>{{attempt.grade}}</td>
-
-
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+	<table class="table table-bordered table-striped table-highlight">
+		<thead>
+			<tr>
+				<td>S.No.</td>
+				<td>Student</td>
+				<td>View Response</td>
+				{% if download_allowed %}
+				<td>Download Response</td>
+				<td>Download Prompt</td>
+				{% endif %}
+				<td>Attempt Submission Time</td>
+				<td>Duration of Attempt</td>
+				<td>Grades</td>
+			</tr>
+		</thead>
+		<tbody>
+			{% for attempt in attempts %}
+			<tr>
+				<td>{{forloop.counter}}</td>
+				<td>{{attempt.student}}</td>
+				<td>
+					<button
+						onClick="show_attempt({{attempt.id}})"
+						class="btn btn-info"
+					>
+						View Response
+					</button>
+				</td>
+				{% if view_download_allowed %}
+				<td>
+					<a
+						href="download/report/excel/{{attempt.id}}"
+						class="btn btn-info"
+						>Download Response</a
+					>
+				</td>
+				{% endif %}
+				<td>
+					<a
+						href="download/prompt/excel/{{attempt.id}}"
+						class="btn btn-info"
+						>Download Prompt</a
+					>
+				</td>
+				<td>{{attempt.submission_time}}</td>
+				<td>{{attempt.duration}}</td>
+				<td>{{attempt.grade}}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
 </div>
 {% endif %}
 
-<hr/>
+<hr />
 
-<div name="response-view" id="response-view-container" style="display:none">
-            
-            <a class='anchor'><h3 align="center">Response Report</h3></a>
-             <div id='response-loading' style='display:none;'>
-                    <div class='loading'></div>
-                    <div class='loading'></div>
-                    <div class='loading'></div>
-            </div>
-            <div id='response-view'>
-            </div>
+<div name="response-view" id="response-view-container" style="display: none">
+	<a class="anchor"><h3 align="center">Response Report</h3></a>
+	<div id="response-loading" style="display: none">
+		<div class="loading"></div>
+		<div class="loading"></div>
+		<div class="loading"></div>
+	</div>
+	<div id="response-view"></div>
 </div>
 
-{% endblock content %}
-
-{% block javascript %}
+{% endblock content %} {% block javascript %}
 <script type="text/javascript">
-	    current_page_num = {{current_page_num}};
-        var show_attempt = function(attempt_id) {
-        $('#response-view-container').show();
-        window.location.href = "#" + "response-view";
-        $('#response-loading').show();
-        //Function to show the details of an attempt
-        //Assuming jQuery is loaded
-        data  = {attempt_id : attempt_id };
-        var div = $('#response-view');
-        div.html('');
-        $.ajax({
-        type: "POST",
-        url: "attempt_details",
-        data: data,
-        success: function(response) {
-            $('#response-loading').hide();
-            div.html(response.content);
-        },
-        error: function(){
-            setTimeout (function() { show_attempt(attempt_id); }, 5000); //retry after 5 seconds
-            div.innerHTML = "<p class='message'>Some error has occurred connecting to server! Trying again...</p>";
-        }
-        });
-    }
-
+	 current_page_num = {{current_page_num}};
+	    var show_attempt = function(attempt_id) {
+	    $('#response-view-container').show();
+	    window.location.href = "#" + "response-view";
+	    $('#response-loading').show();
+	    //Function to show the details of an attempt
+	    //Assuming jQuery is loaded
+	    data  = {attempt_id : attempt_id };
+	    var div = $('#response-view');
+	    div.html('');
+	    $.ajax({
+	    type: "POST",
+	    url: "attempt_details",
+	    data: data,
+	    success: function(response) {
+	        $('#response-loading').hide();
+	        div.html(response.content);
+	    },
+	    error: function(){
+	        setTimeout (function() { show_attempt(attempt_id); }, 5000); //retry after 5 seconds
+	        div.innerHTML = "<p class='message'>Some error has occurred connecting to server! Trying again...</p>";
+	    }
+	    });
+	}
 </script>
 {% endblock %}
