@@ -107,7 +107,7 @@ def resume_quiz(request, previous_attempt):
     responses = previous_attempt.get_response()  # get the responses of the student for this attempt
     answered_question_ids = []  # will be used to store the ids of the questions which are already answered
     question_time_limits = {}
-    promptQuestions = list(map(lambda prompt: prompt.occur_after_question, db.get_prompts_by_quiz(quiz)))
+    promptQuestions = list(map(lambda prompt: prompt.occur_before_question, db.get_prompts_by_quiz(quiz)))
 
     for question in questions:
         question_type = QUESTION_TYPE[question.question_type]
@@ -184,7 +184,6 @@ def show_quiz(request):
 @csrf_exempt
 @validate_user
 def prompt(request):
-    # breakpoint()
     quiz = db.get_quiz(request)
     prompts = db.get_prompts_by_quiz(quiz)
     response = db.get_previous_attempt(request)
@@ -199,7 +198,7 @@ def prompt(request):
             'success': True
         })
     questionNumber = int(request.GET.get('questionNumber'))
-    prompt = prompts.get(occur_after_question = questionNumber)
+    prompt = prompts.get(occur_before_question = questionNumber)
     promptAnswered = PromptResponse.objects.filter(response = response, prompt = prompt)
     if not prompt or promptAnswered:
         return HttpResponseNotFound("Either no prompt available or you have answered already!")
@@ -215,7 +214,6 @@ def prompt(request):
 def save_response(request):
     # To save the response from ajax request
     attempt = db.get_previous_attempt(request)
-    # breakpoint()
     if not attempt:
         message = "Your attempt has either expired or isn't valid!"
         return JsonResponse(
@@ -258,13 +256,19 @@ def save_response(request):
             return JsonResponse({'success':'true'})
         return JsonResponse({'success': 'false'})
     
-    for qid_string in request.POST:
-        # check that the student can only access the question of the quiz they are answering
-        # TODO: Check the response request.POST[qid_string] is valid! It seems like a
-        # security flaw that the data from the POST is directly saved in the database
-        # without any sanity check at all!
-        if qid_string.isdigit() and int(qid_string) in questions_id:
-            attempt.add_or_update_response(qid_string, request.POST[qid_string])
+    if request.body:
+        data = json.loads(request.body.decode('utf-8'))
+        print(data)
+        events = data.get('events', [])
+        if events:
+            del data['events']
+        for qid_string in data:
+            # check that the student can only access the question of the quiz they are answering
+            # TODO: Check the response request.POST[qid_string] is valid! It seems like a
+            # security flaw that the data from the POST is directly saved in the database
+            # without any sanity check at all!
+            if qid_string.isdigit() and int(qid_string) in questions_id:
+                attempt.add_or_update_response(qid_string, data[qid_string], events)
 
     return JsonResponse({'success': 'true'})
 
@@ -331,7 +335,7 @@ def send_grade_to_lms(request, attempt):
         raise Exception("Some error occurred while sending grade to the lms.")
 
     # add the last successfully sent response id and time to the outcome_service_data
-    outcome_service_data = OutcomeServiceData.objects.get_or_create(user=student, quiz=quiz)
+    outcome_service_data, _ = OutcomeServiceData.objects.get_or_create(user=student, quiz=quiz)
     outcome_service_data.response_sent = attempt
     outcome_service_data.outcome_send_time = datetime.datetime.utcnow()
         
@@ -427,7 +431,6 @@ def get_attempts_detail(request):
 
 
 def get_duration_time(response):
-    # breakpoint()
     return str(
         round((response.submission_time - response.start_time).total_seconds() // 60)) + " mins " \
             + str(int((response.submission_time - response.start_time).total_seconds() % 60)) + " secs"

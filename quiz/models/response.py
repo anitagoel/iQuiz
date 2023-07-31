@@ -18,17 +18,19 @@ class Response(models.Model):
     tab_switch_count = models.JSONField(default=dict)
     submission_time = models.DateTimeField(null=True)
     submitted = models.BooleanField(default= False)
+    events = models.JSONField(default={})
 
     def __str__(self):
         return f"User {self.user}'s Response"
 
-    def add_or_update_response(self, qid, newResponse):
-        # breakpoint()
+    def add_or_update_response(self, qid, newResponse, events):
         response = json.loads(self.response)
         if response == '' or type(response) != dict:
             response = {}
         responseList = response.get(qid,[])
         responseList.append(( newResponse, timezone.now().timestamp() ))
+        self.events[qid] = self.events.get(qid, [])
+        self.events[qid].append(events)
         response[qid] = responseList
         self.response = json.dumps(response)
         self.save()

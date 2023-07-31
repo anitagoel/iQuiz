@@ -6,7 +6,7 @@ from . import *
 class Prompt(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     question = models.TextField()
-    occur_after_question = models.IntegerField()
+    occur_before_question = models.IntegerField(help_text="Enter the question number before which the prompt will appear!")
 
 
 class PromptResponse(models.Model):
@@ -22,4 +22,4 @@ class PromptForm(forms.ModelForm):
 
     class Meta:
         model = Prompt
-        fields = ['question', 'occur_after_question']
+        fields = ['question', 'occur_before_question']

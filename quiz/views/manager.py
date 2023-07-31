@@ -342,9 +342,9 @@ def publish(request):
         questions = db.get_questions_by_quiz(quiz)
 
         prompts = db.get_prompts_by_quiz(quiz)
-        max_question = max(map(lambda x: x.occur_after_question, prompts))
-        if not max_question <= len(questions):
-            message = f"Prompt occur after question must be less than total number of questions in the quiz!\n Try changing the occur after question in prompt to be less than {len(questions) + 1}"
+        max_question = max(map(lambda x: x.occur_before_question, prompts))
+        if not max_question <= len(questions) + 1:
+            message = f"Prompt occur before question can be 1 to total number of questions + 1!\n Try changing the occur before question in prompt to be less than {len(questions) + 2}"
             return json_message_html(message)
         
         quiz.published = True

@@ -118,7 +118,7 @@ def download_report_data(request, attempt_id):
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    columns = ['Username/ID', 'Exam ID', 'Question ID', 'Question Difficulty', 'Question Type', 'Question Location', 'Possible Score', 'Earned Score', 'Correct Response', 'Draft Response with timestamps', 'Final Response', 'Time Spent (secs)', 'Submission Time']
+    columns = ['Username/ID', 'Exam ID', 'Question ID', 'Question Difficulty', 'Question Type', 'Question Location', 'Possible Score', 'Earned Score', 'Correct Response', 'Draft Response with timestamps', 'Final Response', 'Time Spent (secs)', 'Submission Time', 'Mouse Events']
     exam_id = f'{quiz.createdOn.strftime("%d-%m-%Y")}_{quiz.resourceLinkId}_{quiz.contextId}'
 
     # if quiz.maxAttempts is not None:
@@ -139,6 +139,7 @@ def download_report_data(request, attempt_id):
             row_num = row_num + 1
             question = quiz.question_set.filter(pk=question_id).first()
             answer_object = question.answer_set.filter(response=response_obj).first()
+            events = json.dumps(response_obj.events.get(question_id, []))
             # get time spent on that question
             time_spent = 0
             if answer_object:
@@ -168,7 +169,8 @@ def download_report_data(request, attempt_id):
             # Answered/Unanswered in SAQ
             if question.question_type == 'SAQ':
                 correct_incorrect = 'Answered' if student_response[-1][0] != '' else 'Unanswered'
-            values = [student.name, exam_id, question.serial_number, question.question_difficulty, question.question_type, f'{quiz.contextTitle} > {quiz.quizName}', question.question_weight, earned_score, expected_response, json.dumps(student_response), str(chosen_response), time_spent, answer_submission_time ]
+            # breakpoint()
+            values = [student.name, exam_id, question.serial_number, question.question_difficulty, question.question_type, f'{quiz.contextTitle} > {quiz.quizName}', question.question_weight, earned_score, expected_response, json.dumps(student_response), str(chosen_response), time_spent, answer_submission_time, events]
             for index, value in enumerate(values):
                 ws.write(row_num, index, value)
     wb.save(response)
