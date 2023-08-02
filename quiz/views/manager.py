@@ -11,6 +11,7 @@ from django.views.decorators.csrf import csrf_exempt
 from quiz.utils.decorators import *
 from ..forms import QuizSettingsForm
 from ..models import QuizManager, Question
+from ..models.prompt import PromptForm, Prompt
 from ..questions import QUESTION_TYPE
 from . import student
 
@@ -115,6 +116,51 @@ def edit_quiz_settings(request):
 
 @csrf_exempt
 @validate_manager
+def prompt(request):
+    message = False
+    # POST request with no data
+    form = PromptForm()
+    template = loader.get_template('questions/prompt-form.html')
+    content = template.render({'form': form})
+    if request.POST.get('id'):
+        # Editing the existing prompt
+        prompt = Prompt.objects.get(id=request.POST.get('id'))
+        form = PromptForm(instance=prompt)
+        content = template.render({'form': form, 'id': prompt.pk})
+
+    if request.POST.get('form-save-request'):
+        if request.POST.get('id'):
+            # Edit request
+            form = PromptForm(data=request.POST, instance=prompt)
+            if form.is_valid():
+                form.save()
+                content = template.render({'form': form})
+                message = "Prompt Update successfully!"
+        else:
+            quiz = db.get_quiz(request)
+            form = PromptForm(data=request.POST)
+            # Saving new prompt since data is present and id is not present
+            if form.is_valid():
+                promtObj = form.save(commit=False)
+                promtObj.quiz = quiz
+                promtObj.save()
+                message = "Prompt Added successfully!"
+    
+    if request.POST.get('confirm_delete'):
+        prompt = Prompt.objects.get(id=request.POST.get('id'))
+        if not prompt:
+            message = "Prompt not found!"
+            return edit(request, message=message, success=False)
+        else:
+            prompt.delete()
+            return edit(request, message="The prompt has been deleted successfully", success=True)
+        
+    return JsonResponse({'content': content, 'success': True, 'message': message})
+
+
+
+@csrf_exempt
+@validate_manager
 def edit(request, message=None, success=False):
     quiz = db.get_quiz(request)
     # Check if the quiz is ever attempted
@@ -137,9 +183,9 @@ def edit(request, message=None, success=False):
             question_dict['draft'] = draft
             question_dict['qid'] = question.id
             questions_list.append(question_dict)
-
+        prompts = db.get_prompts_by_quiz(quiz)
         template = loader.get_template('edit.html')
-        content = template.render( {'questions': questions_list} )
+        content = template.render( {'questions': questions_list, 'prompts': prompts} )
 
     return JsonResponse({'content': content, 'message': message, 'success':success})
 
@@ -155,7 +201,6 @@ def edit_question(request, question=None):
     if quiz.isEverAttempted:
         message = 'The quiz cannot be edited as it is attempted by at least one student!'
         return json_message_html(message, False)
-        
     if question: 
         question_type = QUESTION_TYPE[question.question_type]
         return question_type.get_edit_view(request, question)
@@ -294,9 +339,16 @@ def publish(request):
     confirm_delete = request.POST.get('confirm_delete', False)
     if confirm_publish:
         quiz = db.get_quiz(request)
+        questions = db.get_questions_by_quiz(quiz)
+
+        prompts = db.get_prompts_by_quiz(quiz)
+        max_question = max(map(lambda x: x.occur_before_question, prompts))
+        if not max_question <= len(questions) + 1:
+            message = f"Prompt occur before question can be 1 to total number of questions + 1!\n Try changing the occur before question in prompt to be less than {len(questions) + 2}"
+            return json_message_html(message)
+        
         quiz.published = True
         # Copy all the draft fields to the published fields
-        questions = db.get_questions_by_quiz(quiz)
         for question in questions:
             question.statement = question.draft_statement
             question.options_data = question.draft_options_data

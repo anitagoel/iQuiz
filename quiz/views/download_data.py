@@ -1,4 +1,5 @@
 from quiz.models.response import Response
+from quiz.models import PromptResponse
 import xlwt, json
 from django.http import HttpResponse
 from quiz.utils.decorators import *
@@ -117,7 +118,7 @@ def download_report_data(request, attempt_id):
     font_style = xlwt.XFStyle()
     font_style.font.bold = True
 
-    columns = ['Username/ID', 'Exam ID', 'Question ID', 'Question Difficulty', 'Question Type', 'Question Location', 'Possible Score', 'Earned Score', 'Correct Response', 'Draft Response with timestamps', 'Final Response', 'Time Spent (secs)', 'Submission Time']
+    columns = ['Username/ID', 'Exam ID', 'Question ID', 'Question Difficulty', 'Question Type', 'Question Location', 'Possible Score', 'Earned Score', 'Correct Response', 'Draft Response with timestamps', 'Final Response', 'Time Spent (secs)', 'Submission Time', 'Mouse Events']
     exam_id = f'{quiz.createdOn.strftime("%d-%m-%Y")}_{quiz.resourceLinkId}_{quiz.contextId}'
 
     # if quiz.maxAttempts is not None:
@@ -138,6 +139,7 @@ def download_report_data(request, attempt_id):
             row_num = row_num + 1
             question = quiz.question_set.filter(pk=question_id).first()
             answer_object = question.answer_set.filter(response=response_obj).first()
+            events = json.dumps(response_obj.events.get(question_id, []))
             # get time spent on that question
             time_spent = 0
             if answer_object:
@@ -167,9 +169,58 @@ def download_report_data(request, attempt_id):
             # Answered/Unanswered in SAQ
             if question.question_type == 'SAQ':
                 correct_incorrect = 'Answered' if student_response[-1][0] != '' else 'Unanswered'
-            values = [student.name, exam_id, question.serial_number, question.question_difficulty, question.question_type, f'{quiz.contextTitle} > {quiz.quizName}', question.question_weight, earned_score, expected_response, json.dumps(student_response), str(chosen_response), time_spent, answer_submission_time ]
+            # breakpoint()
+            values = [student.name, exam_id, question.serial_number, question.question_difficulty, question.question_type, f'{quiz.contextTitle} > {quiz.quizName}', question.question_weight, earned_score, expected_response, json.dumps(student_response), str(chosen_response), time_spent, answer_submission_time, events]
             for index, value in enumerate(values):
                 ws.write(row_num, index, value)
+    wb.save(response)
+    return response
+
+
+def download_prompt_data(request, attempt_id):
+    
+    quiz = db.get_quiz(request)
+    student_response = Response.objects.get(pk=attempt_id)
+    student = student_response.user
+    prompts = PromptResponse.objects.filter(response=student_response)
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = f'attachment; filename="{student.id}_{student.name}_prompt_response.xls"'
+
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet("sheet1")
+
+    row_num = 0
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    columns = ['Username/ID', 'Exam ID', 'Prompt ID', 'Question', 'Response', 'Timestamp', 'Event', 'Key', 'Code', 'ShiftKey', 'CapsLock']
+    exam_id = f'{quiz.createdOn.strftime("%d-%m-%Y")}_{quiz.resourceLinkId}_{quiz.contextId}'
+
+    # if quiz.maxAttempts is not None:
+    #     columns.append('Attempts')
+    #     ws.write(row_num, 9, )
+    for col_num in range(len(columns)):
+        ws.write(row_num, col_num, columns[col_num], font_style)
+
+    row_num += 1
+
+    # Sheet body, remaining rows
+    font_style = xlwt.XFStyle()
+
+    for prompt_response in prompts:
+        values = [
+                student.name, 
+                exam_id, 
+                prompt_response.id, 
+                prompt_response.prompt.question, 
+                prompt_response.prompt_response
+            ]
+        for event in prompt_response.events:
+            values_copy = values.copy()
+            values_copy.extend([event.get('timestamp'), event.get('event_type'), event.get('key', '-'), event.get('code', '-'), event.get('shiftKey', '-'), event.get('capsLock', '-')])
+            for col_num, value in enumerate(values_copy):
+                ws.write(row_num, col_num, value)
+            row_num += 1
     wb.save(response)
     return response
 

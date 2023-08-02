@@ -9,9 +9,10 @@ from django.template import loader
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from pylti.common import post_message, generate_request_xml
+from django.http import HttpResponseNotFound
 
 from quiz.utils.decorators import *
-from ..models import Question, Response, OutcomeServiceData, Answer
+from ..models import Question, Response, OutcomeServiceData, Answer, PromptResponse
 from ..questions import QUESTION_TYPE
 
 CONSUMERS = settings.LTI_OAUTH_CREDENTIALS
@@ -106,6 +107,7 @@ def resume_quiz(request, previous_attempt):
     responses = previous_attempt.get_response()  # get the responses of the student for this attempt
     answered_question_ids = []  # will be used to store the ids of the questions which are already answered
     question_time_limits = {}
+    promptQuestions = list(map(lambda prompt: prompt.occur_before_question, db.get_prompts_by_quiz(quiz)))
 
     for question in questions:
         question_type = QUESTION_TYPE[question.question_type]
@@ -144,9 +146,10 @@ def resume_quiz(request, previous_attempt):
             'time_left': time_left,
             'answered_question_ids': answered_question_ids,
             'question_time_limits': question_time_limits,
+            'prompt_questions': promptQuestions,
         }
 
-    if request.is_ajax():
+    if request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
         template = loader.get_template('quiz-body.html')
         content = template.render(context)
         return JsonResponse({'content' : content})
@@ -180,10 +183,37 @@ def show_quiz(request):
 
 @csrf_exempt
 @validate_user
+def prompt(request):
+    quiz = db.get_quiz(request)
+    prompts = db.get_prompts_by_quiz(quiz)
+    response = db.get_previous_attempt(request)
+    if request.content_type == 'application/json' and response:
+        data = json.loads(request.read().decode())
+        id = int(data.get('id'))
+        prompt_response = data.get('response')
+        promptResponse = PromptResponse(response = response, prompt = prompts.get(pk=id), prompt_response=prompt_response)
+        promptResponse.events = data.get('events')
+        promptResponse.save()
+        return JsonResponse({
+            'success': True
+        })
+    questionNumber = int(request.GET.get('questionNumber'))
+    prompt = prompts.get(occur_before_question = questionNumber)
+    promptAnswered = PromptResponse.objects.filter(response = response, prompt = prompt)
+    if not prompt or promptAnswered:
+        return HttpResponseNotFound("Either no prompt available or you have answered already!")
+    
+    return JsonResponse({
+        'question': prompt.question,
+        'id': prompt.id
+    })
+
+
+@csrf_exempt
+@validate_user
 def save_response(request):
     # To save the response from ajax request
     attempt = db.get_previous_attempt(request)
-
     if not attempt:
         message = "Your attempt has either expired or isn't valid!"
         return JsonResponse(
@@ -214,7 +244,6 @@ def save_response(request):
     # add the response to the Response object for the live attempt
     quiz = db.get_quiz(request)
     questions_id = db.get_published_questions_id(quiz)  # get the question ids for the quiz
-
     # check if the request has a viewing-time-qid and the time in the POST
     qid_viewing_time = request.POST.get("viewing-time-qid", False)
     time_duration = request.POST.get("viewing-time-duration", False)
@@ -227,13 +256,19 @@ def save_response(request):
             return JsonResponse({'success':'true'})
         return JsonResponse({'success': 'false'})
     
-    for qid_string in request.POST:
-        # check that the student can only access the question of the quiz they are answering
-        # TODO: Check the response request.POST[qid_string] is valid! It seems like a
-        # security flaw that the data from the POST is directly saved in the database
-        # without any sanity check at all!
-        if qid_string.isdigit() and int(qid_string) in questions_id:
-            attempt.add_or_update_response(qid_string, request.POST[qid_string])
+    if request.body:
+        data = json.loads(request.body.decode('utf-8'))
+        print(data)
+        events = data.get('events', [])
+        if events:
+            del data['events']
+        for qid_string in data:
+            # check that the student can only access the question of the quiz they are answering
+            # TODO: Check the response request.POST[qid_string] is valid! It seems like a
+            # security flaw that the data from the POST is directly saved in the database
+            # without any sanity check at all!
+            if qid_string.isdigit() and int(qid_string) in questions_id:
+                attempt.add_or_update_response(qid_string, data[qid_string], events)
 
     return JsonResponse({'success': 'true'})
 
@@ -300,8 +335,8 @@ def send_grade_to_lms(request, attempt):
         raise Exception("Some error occurred while sending grade to the lms.")
 
     # add the last successfully sent response id and time to the outcome_service_data
-    outcome_service_data = OutcomeServiceData.objects.get_or_create(user=student, quiz=quiz)
-    outcome_service_data.response = attempt
+    outcome_service_data, _ = OutcomeServiceData.objects.get_or_create(user=student, quiz=quiz)
+    outcome_service_data.response_sent = attempt
     outcome_service_data.outcome_send_time = datetime.datetime.utcnow()
         
 
@@ -346,9 +381,12 @@ def attempt_details(request):
         return JsonResponse({'content': '<h4>Invalid Request</h4>'})
 
     attempt_id = request.POST['attempt_id']
+    prompts = []
     try:
         response = Response.objects.get(id=attempt_id)
-    except:
+        prompts = PromptResponse.objects.filter(response=response)
+    except Exception as exc:
+        print(exc)
         pass
 
     if not response or (lti.is_student(request) and response.user != user):
@@ -370,7 +408,7 @@ def attempt_details(request):
         # Return the full details of the response
         attempt_details_full, question_paper = get_attempts_details_and_paper(quiz, response)
         template = loader.get_template('responded_question_paper.html')
-        content = template.render({'attempt_details': attempt_details_full, 'question_paper': question_paper})
+        content = template.render({'attempt_details': attempt_details_full, 'question_paper': question_paper, 'prompts': prompts})
         return JsonResponse({'content': content})
 
 
@@ -393,7 +431,6 @@ def get_attempts_detail(request):
 
 
 def get_duration_time(response):
-    # breakpoint()
     return str(
         round((response.submission_time - response.start_time).total_seconds() // 60)) + " mins " \
             + str(int((response.submission_time - response.start_time).total_seconds() % 60)) + " secs"

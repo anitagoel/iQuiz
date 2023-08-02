@@ -14,8 +14,10 @@ urlpatterns = [
         path('grades', views.manager.grades, name='grades'),
         path('download/grade/excel', views.download_data.download_grade_data),
         path('download/report/excel/<int:attempt_id>', views.download_data.download_report_data),
+        path('download/prompt/excel/<int:attempt_id>', views.download_data.download_prompt_data),
         path('edit_question', views.manager.edit_question, name='edit_question'),
         path('add_question', views.manager.add_question, name="add_question"),
+        path('prompt', views.manager.prompt, name="prompt"),
         path('publish', views.manager.publish, name="publish"),
 
         # URL for students
@@ -25,6 +27,7 @@ urlpatterns = [
         path('attempt_details', views.student.attempt_details, name="attempt_details"),
         path('attempt_analytics', views.student.attempt_analytics, name="attempt_analytics"),
         path('analytics_page', views.student.analytics_page, name="analytics_page"),
+        path('student_prompt', views.student.prompt, name="student_prompt"),
 
         path('questionattemptstart', views.student.questionVisitTime, name="question_visit_time"),
         path('tabswitch', views.student.tabSwitchCount, name="tab_switch_count"),

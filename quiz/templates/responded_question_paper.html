@@ -67,6 +67,20 @@ if (!$('head #responded-question-paper-css')[0])
           </div>
         {% endfor %}
 
+		{% if prompts %}
+		  <h3>Prompts</h3>
+		{% endif %}
+
+		{% for prompt in prompts %}
+		<div class="responded-question">
+			
+			<span style="display:inline-block">{{forloop.counter}}</span>
+			<p>{{prompt.prompt.question}}</p>
+			<input style="width: 100%; margin-bottom: 20px;" disabled value="{{prompt.prompt_response|safe}}" >
+			</input>
+		</div>
+		{% endfor %}
+
     </div>
 
 {% endblock content %}

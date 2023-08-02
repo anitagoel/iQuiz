@@ -17,7 +17,7 @@ function initialize_quiz() {
 	    changeButtonState(qid, "answered");
 	    }
 	);
-	updateAnswerNumberButtons ();
+	updateAnswerNumberButtons();
 	
 	$("#questions-slider-nav").on('input', function () {
 		let index = this.value-1;
@@ -84,7 +84,13 @@ var setTimeForQuestion = (qid) => {
 
 
 function submit() {
-	window.removeEventListener('blur', handleTabSwitch)
+
+	if(prompts.indexOf(current_question_index + 2) != -1){
+		getPrompt(current_question_index + 2);
+		return;
+	}
+
+	window.removeEventListener('blur', handleTabSwitch);
 	var ok = confirm("Are you sure you want to submit?");
 	if (ok){
 		force_submit();
@@ -110,7 +116,7 @@ function check_submit(){
 		href = '/student';
 		message = 'The quiz has been submitted!'
 		redirectHandler(href, message, 1000);
-		saveResponseAjax(["submit-request",{submit:"1"}]);
+		saveResponseAjax(["submit-request","submit=1"]);
 	}
 
 	else {
@@ -171,6 +177,96 @@ function validate_data(data, qid){
     return data
 }
 
+let events = [];
+
+const event_recorder = (event) => {
+	console.log(event);
+	if(event instanceof MouseEvent){
+		events.push({timestamp: Date.now(), event_type: event.type, text: event.target.innerText});
+	}
+	if(event instanceof KeyboardEvent) {
+		events.push({timestamp: Date.now(), event_type: event.type, key: event.key, shiftKey: event.shiftKey, code: event.code, capsLock: event.getModifierState('CapsLock')})
+	}
+}
+
+
+function getPrompt(questionNumber) { 
+	$.ajax({
+		type: "GET",
+		url: "student_prompt",
+		data: {questionNumber: questionNumber},
+		success: (response) => {
+			$('#PromptModal input[name=id]').val(response.id);
+			$('#PromptModal label[for=response]').text(response.question);
+			$('#PromptModal').modal('show');
+			document.addEventListener('keydown', event_recorder);
+			document.addEventListener('keyup', event_recorder);
+			document.addEventListener('click', event_recorder);
+			document.addEventListener('dblclick', event_recorder);
+		},
+		error: (response) => {
+			prompts = prompts.filter(x => x != questionNumber);
+			// Current question is not yet answered and if there is error then show the current question
+			jumpToQuestion(question_ids[current_question_index]);
+		}
+	})
+}
+
+function formToObject(form) {
+	if(form instanceof HTMLFormElement){
+		let data = {};
+		let formData = new FormData(form);
+		formData.forEach(function(value, key){
+			data[key] = value;
+		});
+		return data;
+	}
+	throw new Error("The element is not a form element");
+}
+
+function submitPrompt(){
+	let data = formToObject(document.querySelector('#PromptModal form'));
+	data['events'] = events;
+	$.ajax({
+		type: "POST",
+		url: "student_prompt",
+		data: JSON.stringify(data),
+		contentType: "application/json; charset=utf-8",
+	})
+
+	$('#PromptModal').modal('hide');
+
+	document.removeEventListener('keydown', event_recorder);
+	document.removeEventListener('keyup', event_recorder);
+	document.removeEventListener('click', event_recorder);
+	document.removeEventListener('dblclick', event_recorder);
+	events = [];
+	$('#PromptModal form')[0].reset();
+
+	if(question_ids.length - 1 == current_question_index){
+		prompts = prompts.filter(x => x != current_question_index + 2);
+		submit();
+		return;
+	}
+	prompts = prompts.filter(x => x != current_question_index + 1);
+	// Current question is answered and prompt is submitted successfully so move to the next question.
+	jumpToQuestion(question_ids[current_question_index]);
+}
+
+function moveToNextQuestion() {
+	if (current_question_index < question_ids.length - 1) {
+        jumpToQuestion(question_ids[current_question_index+1]);
+    }
+    else{
+    	// jumpToQuestion(question_ids[0]);
+		if(question_ids.length - 1 == current_question_index){
+			console.log("It is the last question! Force Submit");
+			// force_submit();
+		}
+    }
+    updateAnswerNumberButtons ();
+}
+
 
 function save_and_next(qid){
 	//Mark as visited
@@ -180,25 +276,18 @@ function save_and_next(qid){
 	var form = $('#form-question-' + qid);
 	//validate that required fields are there before sending the response
 	//Serialize the form associated with given question_id
-	data = $('#form-question-' + qid).serialize();
+	// data = $('#form-question-' + qid).serialize();
+	let data = formToObject(document.querySelector('#form-question-' + qid));
+	data['events'] = events;
+	data['type'] = 'save-response';
 	if (data && validate_data(data, qid)){
         changeButtonState(qid, "answered");
         request = [qid, data];
         success = saveResponseAjax(request);
     }
+	events = [];
 
-    if (current_question_index < question_ids.length - 1) {
-        jumpToQuestion(question_ids[current_question_index+1]);
-    }
-    else{
-    	// jumpToQuestion(question_ids[0]);
-		if(qid === question_ids[question_ids.length-1]){
-			console.log("Force Submit")
-			// force_submit();
-		}
-    }
-
-    updateAnswerNumberButtons ();
+    moveToNextQuestion();
 }
 
 function mark_for_review_and_next(btnobj, qid){
@@ -226,7 +315,7 @@ function clear_response(qid){
 		return;
 	}
 	
-	data = {"clear_response": qid};
+	data = `clear_response=${qid}`;
 	request = [qid, data];
 	saveResponseAjax(request);
 	//Reset the form for the given qid
@@ -235,36 +324,48 @@ function clear_response(qid){
 	console.log("Response cleared for Question Id: " + qid);
 }
 
+const ResponseSuccessHandler = function(response) {
+	if ('error' in response){
+		redirectHandler('/student', 'Some error has occurred! Please report this to admin.', 5000);
+	}
+
+	if ('redirect' in response) {
+	   //Redirect request is received, handle it
+	   href = response['redirect'];
+	   message = '';
+	   time = 1000;
+	   if ('message' in response) message = response['message'];
+	   if ('time' in response) time = response['time'];
+	   redirectHandler(href, message, time);
+   }
+	success = true;
+}
+
+const ResponseErrorHandler = function(){
+	postponedRequest[question_id] = data;
+	pollServerConnection(); //Keep polling the server until successful
+}
+
 function saveResponseAjax(request){
 	question_id = request[0];
 	data = request[1];
 	success = false;
-
-	$.ajax({
-    type: "POST",
-    url: "quiz/save_response",
-    data: data,
-    success: function(response) {
-     	if ('error' in response){
-     		redirectHandler('/student', 'Some error has occurred! Please report this to admin.', 5000);
-     	}
-
-     	if ('redirect' in response) {
-    		//Redirect request is received, handle it
-    		href = response['redirect'];
-    		message = '';
-    		time = 1000;
-    		if ('message' in response) message = response['message'];
-    		if ('time' in response) time = response['time'];
-    		redirectHandler(href, message, time);
-    	}
-     	success = true;
-    },
-    error: function(){
-    	postponedRequest[question_id] = data;
-    	pollServerConnection(); //Keep polling the server until successful
-    }
-    });
+	if(typeof data === 'string'){
+		$.ajax({
+			type: "POST",
+			url: "quiz/save_response",
+			data: data,
+			success: ResponseSuccessHandler,
+			error: ResponseErrorHandler
+		});
+	} else {
+		$.ajax({
+			type: "POST",
+			url: "quiz/save_response",
+			data: JSON.stringify(data),
+			contentType: "application/json; charset=utf-8",
+		})
+	}
 	return success;
 }
 
@@ -344,7 +445,7 @@ function send_time_spent_details(qid){
 		if (diff<1){
 			return; // Ignore if less than 1 second TODO: Was it right thing to do? Should we create a dictionary to store the time locally and send when its beyond a fixed time?
 		}
-		request = [question_id_with_tag, {"viewing-time-qid": current_question_id, "viewing-time-duration": diff}]; 
+		request = [question_id_with_tag, `viewing-time-qid=${current_question_id}&viewing-time-duration=${diff}`];
 		setTimeout(() => {saveResponseAjax(request)}, 1000); // Since backend could not get the saved response immediately for processing
 		//Now change the current_section_start_time to now!
 		current_section_start_time = Date.now();
@@ -382,6 +483,11 @@ jumpToQuestionFunctions = [sendQuestionStartTime, send_time_spent_details, remov
 
 function jumpToQuestion(qid){
 	//Call each function from jumpToQuestionFunctions array with qid.
+	if(prompts.indexOf(current_question_index + 1) != -1){
+		getPrompt(current_question_index + 1);
+		return;
+	}
+	
 	for (index in jumpToQuestionFunctions){
 		jumpToQuestionFunctions[index](qid);
 	}
@@ -392,6 +498,12 @@ function sendQuestionStartTime(qid) {
 	if (current_section_start_time == null){
 		current_section_start_time = Date.now();
 	}
+	let questionElement = document.getElementById('div-question-'+ qid);
+	if(questionElement){
+		questionElement.addEventListener("mouseup", event_recorder);
+		questionElement.addEventListener("mousedown", event_recorder);
+	}
+
 	$.ajax({
 		type: "POST",
 		url: "questionattemptstart",

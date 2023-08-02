@@ -1,7 +1,7 @@
 from django.db.models import Sum
 
 from quiz.utils import lti_utils as lti
-from quiz.models import Quiz, LTIUser, QuizSettings, Question, Response, QuizManager
+from quiz.models import Quiz, LTIUser, QuizSettings, Question, Response, QuizManager, Prompt
 
 
 def get_quiz(request):
@@ -88,6 +88,10 @@ def get_user(request):
 
 def get_questions_by_quiz(quiz):
     return Question.objects.order_by('serial_number').filter(quiz = quiz)
+
+
+def get_prompts_by_quiz(quiz):
+    return Prompt.objects.order_by('id').filter(quiz = quiz)
 
 
 def get_published_questions(quiz, random=None):
